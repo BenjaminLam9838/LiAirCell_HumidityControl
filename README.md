@@ -44,9 +44,9 @@ The python server makes a sysex request with the same command ID as the I2C addr
 Mechanical/Electrical
 ===
 Main Parts List:
-- Mass Flow Controller: Alicat MC-100SCCM-D-DB9M/5M
-- Humidifier: Permapure MH-050-12P-2 12" Humidifier - Poly Fit/Shel
-- Humidity/Temperature Sensor: [CC2D25S-SIP](https://www.digikey.com/en/products/detail/amphenol-advanced-sensors/CC2D25S-SIP/4732678))
+- Mass Flow Controller: [Alicat MC-100SCCM-D-DB9M/5M](https://www.alicat.com/gas-products/laminar-dp-mass-flow-meters-and-controllers/)
+- Humidifier: [Permapure MH-050-12P-2 12" Humidifier - Poly Fit/Shel](https://www.permapure.com/environmental-scientific/products/gas-humidification/mh-series-humidifiers/)
+- Humidity/Temperature Sensor: [CC2D25S-SIP](https://www.digikey.com/en/products/detail/amphenol-advanced-sensors/CC2D25S-SIP/4732678)
 
 Connections between components is done with polypropylene tubing and push-to-connect fittings from McMaster (nominal size 1/8").  Stainless steel NPT fittings are used as needed, mainly for the mixing of the gas streams and for the humidity/temperature sensors.
 
