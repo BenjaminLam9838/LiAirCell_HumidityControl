@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.1 (9c6d41e, 2022-07-14)"
+   sodipodi:docname="inkscape_test.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="0.79552236"
+     inkscape:cx="372.08257"
+     inkscape:cy="490.24392"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <rect
+       style="fill:#00ee0f;stroke:#000000;stroke-width:0.480732;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+       id="rect234"
+       width="36.253654"
+       height="63.526089"
+       x="28.934757"
+       y="41.5732" />
+    <rect
+       style="fill:#00ee0f;stroke:#000000;stroke-width:0.481999;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+       id="rect236"
+       width="67.515915"
+       height="23.613939"
+       x="99.112038"
+       y="40.243473" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:0.481999;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+       d="m 65.188414,73.336244 h 19.622211 l 0,-21.452095 14.301412,0.166295"
+       id="path408"
+       sodipodi:nodetypes="cccc" />
+    <text
+       xml:space="preserve"
+       style="font-size:14.0722px;font-family:'.Al Tarikh PUA';-inkscape-font-specification:'.Al Tarikh PUA, Normal';fill:#00ee0f;fill-opacity:1;stroke:none;stroke-width:0.28233;stroke-linecap:round;stroke-linejoin:round;paint-order:stroke markers fill"
+       x="99.112038"
+       y="83.808472"
+       id="text2589"><tspan
+         sodipodi:role="line"
+         id="tspan2587"
+         style="fill:#00ee0f;fill-opacity:1;stroke:none;stroke-width:0.28233"
+         x="99.112038"
+         y="83.808472">Temp</tspan></text>
+  </g>
+</svg>

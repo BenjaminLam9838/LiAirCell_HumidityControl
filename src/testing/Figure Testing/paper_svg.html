@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Display and Edit SVG with Paper.js</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.15/paper-full.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        canvas { border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>Display and Edit SVG with Paper.js</h1>
+    <canvas id="myCanvas" resize></canvas>
+
+    <button onclick="updateText('New Text')">Update Text</button>
+
+    <script type="text/paperscript" canvas="myCanvas">
+        // Load the SVG file
+        var url = 'inkscape_test.svg'; // Replace with the path to your SVG file
+        paper.project.importSVG(url, function(item) {
+            // Center the imported SVG in the view
+            item.position = paper.view.center;
+
+            // Function to update text elements within the SVG
+            window.updateText = function(newText) {
+                // Iterate over all child items to find and update text elements
+                item.children.forEach(function(child) {
+                    if (child instanceof paper.PointText) {
+                        child.content = newText; // Update the text content
+                    }
+                });
+                paper.view.update(); // Redraw the view to reflect changes
+            };
+        });
+    </script>
+</body>
+</html>

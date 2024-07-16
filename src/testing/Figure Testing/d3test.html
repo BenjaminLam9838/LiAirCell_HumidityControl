@@ -1,0 +1,35 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Power Plant Control Panel</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .status { color: green; }
+        .error { color: red; }
+        svg { width: 100%; height: auto; }
+    </style>
+</head>
+<body>
+    <h1>Power Plant Control Panel</h1>
+    <div>
+        <h2>Status: <span id="status">Loading...</span></h2>
+        <p>Power Output: <span id="power_output">Loading...</span> MW</p>
+        <p>Temperature: <span id="temperature">Loading...</span> °C</p>
+        <p>Pressure: <span id="pressure">Loading...</span> bar</p>
+    </div>
+    <div>
+        <h2>Power Plant Diagram</h2>
+        <!-- Add your SVG here -->
+        <svg id="powerplant-svg" viewBox="0 0 800 600">
+            <!-- Example components -->
+            <rect x="100" y="100" width="200" height="100" style="fill:blue;stroke:black;stroke-width:2;"></rect>
+            <text x="150" y="160" fill="white">Boiler</text>
+            <circle cx="500" cy="150" r="50" style="fill:green;stroke:black;stroke-width:2;"></circle>
+            <text x="475" y="155" fill="white">Turbine</text>
+        </svg>
+    </div>
+</body>
+</html>

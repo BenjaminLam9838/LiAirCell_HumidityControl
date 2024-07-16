@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Power Plant Diagram with Raphaël.js</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.3.0/raphael.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #diagram { border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+    <h1>Power Plant Diagram</h1>
+    <div id="diagram"></div>
+
+    <button onclick="updateStatus('Normal')">Set to Normal</button>
+    <button onclick="updateStatus('Error')">Set to Error</button>
+
+    <script>
+        var paper = Raphael("diagram", 600, 600); // Create a Raphaël paper object
+
+        // Create shapes
+        var boiler = paper.rect(100, 100, 200, 100).attr({ fill: 'blue', stroke: 'none' });
+        var boilerText = paper.text(200, 160, 'Boiler').attr({ 'text-anchor': 'middle', 'fill': 'white', 'font-size': 16 });
+
+        var turbine = paper.circle(500, 150, 50).attr({ fill: 'green', stroke: 'none' });
+        var turbineText = paper.text(500, 155, 'Turbine').attr({ 'text-anchor': 'middle', 'fill': 'white', 'font-size': 16 });
+
+        var boilerNumber = paper.text(200, 210, '0').attr({ 'text-anchor': 'middle', 'fill': 'black', 'font-size': 14 });
+        var turbineNumber = paper.text(500, 210, '0').attr({ 'text-anchor': 'middle', 'fill': 'black', 'font-size': 14 });
+
+        function updateStatus(status) {
+            if (status === 'Normal') {
+                boiler.attr({ fill: 'blue' });
+                turbine.attr({ fill: 'green' });
+                boilerNumber.attr({ text: '10' });
+                turbineNumber.attr({ text: '20' });
+            } else {
+                boiler.attr({ fill: 'red' });
+                turbine.attr({ fill: 'red' });
+                boilerNumber.attr({ text: '5' });
+                turbineNumber.attr({ text: '10' });
+            }
+        }
+    </script>
+</body>
+</html>
