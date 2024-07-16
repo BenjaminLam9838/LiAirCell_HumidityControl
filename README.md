@@ -7,12 +7,19 @@ A pure O<sub>2</sub> stream is split between two mass-flow controllers (MFCs) wi
 
 Software Configuration
 ===
-First, download the application and install dependancies:
+First, download the application and install dependencies:
 ```bash
 git clone https://github.com/BenjaminLam9838/LiAirCell_HumidityControl
 cd LiAirCell_HumidityControl
+```
+
+Create a virtual environment and install the dependencies:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
+
 The webapp is intended to be run on a local machine.  The python server runs on Flask and this handles all of the data processing and control systems.  It communicates with an Arduino over a Firmata protocol to poll the humidity sensors.  The web application makes requests to this Flask server to display the relevant information.
 Connection to both MFCs and the sensors is required for the application to function properly.  These are outlined below.
 
