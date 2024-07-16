@@ -1,0 +1,9 @@
+/.DS_Store
+/.venv
+/.vscode
+/app.log
+/debug.log
+/old
+/test_file.txt
+/testing
+/testing.py
