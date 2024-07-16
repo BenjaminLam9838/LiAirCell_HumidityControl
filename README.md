@@ -41,5 +41,6 @@ Main Parts List:
 Connections between components is done with polypropylene tubing and push-to-connect fittings from McMaster (nominal size 1/8").  Stainless steel NPT fittings are used as needed, mainly for the mixing of the gas streams and for the humidity/temperature sensors.
 
 ### Humidity/Temperature Sensors
-_In Progress_
+The CC2D25S-SIP sensor is used for this project. This is a small sensor that communicates over I2C.  The default address is ```0x28```.
+
 
