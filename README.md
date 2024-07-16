@@ -17,7 +17,7 @@ cd LiAirCell_HumidityControl
 
 Create a virtual environment and install the dependencies:
 ```bash
-python3 -m venv .venv
+python3.9 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
