@@ -46,7 +46,7 @@ Mechanical/Electrical
 Main Parts List:
 - Mass Flow Controller: Alicat MC-100SCCM-D-DB9M/5M
 - Humidifier: Permapure MH-050-12P-2 12" Humidifier - Poly Fit/Shel
-- Humidity/Temperature Sensor: [CC2D25S-SIP]([url](https://www.digikey.com/en/products/detail/amphenol-advanced-sensors/CC2D25S-SIP/4732678))
+- Humidity/Temperature Sensor: [CC2D25S-SIP](https://www.digikey.com/en/products/detail/amphenol-advanced-sensors/CC2D25S-SIP/4732678))
 
 Connections between components is done with polypropylene tubing and push-to-connect fittings from McMaster (nominal size 1/8").  Stainless steel NPT fittings are used as needed, mainly for the mixing of the gas streams and for the humidity/temperature sensors.
 
