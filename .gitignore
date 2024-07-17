@@ -8,5 +8,5 @@
 /testing
 /testing.py
 /__pycache__
-HSI_test.py
-standard_firmata_test.py
+/HSI_test.py
+/standard_firmata_test.py
