@@ -85,12 +85,16 @@
                                     <input class="form-check-input" type="radio" name="controlState" id="manualControlButton" value="manualControl">
                                     <label class="form-check-label" for="manualControlButton">Manual Control</label>
                                 </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="controlState" id="arbitraryControlButton" value="arbitraryControl">
+                                    <label class="form-check-label" for="arbitraryControlButton">Arbitrary Control</label>
+                                </div>
                             </div>
                     
                             <!-- Parameters and Submit Button on the right -->
                             <div class="col-md-10">
                                 <form id="controlForm">
-                                    <div class="row">
+                                    <div class="row" id="setpoint-manual-settings">
                                         <div class="col-md-10">
                                             <!-- Parameters for State 1 -->
                                             <div id="setpointControlParams" class="state-params">
@@ -134,18 +138,23 @@
                                         </div>
 
                                         <!-- Submit Button -->
-                                        <div class="col-md-2">
+                                        <div class="col-md-2" id="controlSettings-submitButton">
                                             <button type="submit" class="btn btn-primary">Set</button>
+                                        </div>
+                                    </div>
+                                    <div class="d-none" id="arbitrary-settings">
+                                        <div class="row">
+                                            <!-- Button to trigger the arbitrary setpoint settings -->
+                                            <button type="button" class="btn btn-primary" id="arbitrarySetpointModal-Button">
+                                                Custom Humidity Profile
+                                            </button>
                                         </div>
                                     </div>
                                 </form>
                             </div>
                         </div>
                         
-                        <!-- Button to trigger the arbitrary setpoint settings -->
-                        <button type="button" class="btn btn-primary" id="arbitrarySetpointModal-Button">
-                            Custom Humidity Profile
-                        </button>
+                        
                         
                         <hr style=" height: 1px;
                             background-color: #e6e6e6;

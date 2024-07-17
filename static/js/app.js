@@ -36,6 +36,7 @@ $(document).ready(function() {
     //Radio buttons for control mode
     $('#setpointControlButton').change(handleSetpointControlButton);
     $('#manualControlButton').change(handleManualControlButton);
+    $('#arbitraryControlButton').change(handleArbitraryControlButton);
 
     $('#startRecordingButton').click(handleStartRecordingButton);       //Form submission for saving the file and recording data
     $('#abortRecordingButton').click(handleAbortRecordingButton);       //Abort the recording
@@ -188,13 +189,24 @@ function drawFlowDiagram() {
 
 
 function handleSetpointControlButton() {
-    $('#setpointControlParams').removeClass('d-none');    // Show the setpoint control parameters
     $('#manualControlParams').addClass('d-none');         // Hide the manual control parameters
+    $('#arbitrary-settings').addClass('d-none');       // Hide the arbitrary setpoint settings
+    $('#setpointControlParams').removeClass('d-none');    // Show the setpoint control parameters
+    $('#controlSettings-submitButton').removeClass('d-none'); // Show the submit button for the control settings
 }
 
 function handleManualControlButton() {
     $('#setpointControlParams').addClass('d-none');    // Hide the setpoint control parameters
+    $('#arbitrary-settings').addClass('d-none');       // Hide the arbitrary setpoint settings
     $('#manualControlParams').removeClass('d-none');  // Show the manual control parameters
+    $('#controlSettings-submitButton').removeClass('d-none'); // Show the submit button for the control settings
+}
+
+function handleArbitraryControlButton() {
+    $('#setpointControlParams').addClass('d-none');         // Hide the setpoint control parameters
+    $('#manualControlParams').addClass('d-none');         // Hide the manual control parameters
+    $('#controlSettings-submitButton').addClass('d-none'); // Hide the submit button for the control settings
+    $('#arbitrary-settings').removeClass('d-none');       // Show the arbitrary setpoint settings
 }
 
 function handleStartRecordingButton() {
