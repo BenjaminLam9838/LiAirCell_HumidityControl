@@ -195,24 +195,28 @@ class HumiditySensor(DAQ):
         self.address = port[1]
 
         # Try to connect to the Arduino
-        try:
-            HumiditySensor.HSI.connect_board(self.port)
-            message = "Connected to Sensor on port " + self.port
-        except:
-            message = "Humidity Sensor: Could not connect to BOARD"
-            self.is_connected = False
-            logging.error("Could not connect to BOARD")
+        if HumiditySensor.HSI.is_board_connected == False:
+            try:
+                print("trying port")
+                HumiditySensor.HSI.connect_board(self.port)
+                message = "Connected to Sensor on port " + self.port
+            except:
+                message = "Humidity Sensor: Could not connect to BOARD"
+                self.is_connected = False
+                logging.error("Could not connect to BOARD")
 
         # Try to connect to the sensor
-        HumiditySensor.HSI.add_sensor_addr(self.address)
+        HumiditySensor.HSI.add_sensor_addr([self.address])
         try:
+            print("trying sensor")
             HumiditySensor.HSI.get_data(self.address) #This is to check if the sensor is connected, throws TimeoutError if not
-            message = f"Connected to Sensor on port {self.port} with address {self.address}"
+            message = f"Connected to Sensor on port {self.port} with address {hex(self.address)}"
             self.is_connected = True
-        except:
+        except TimeoutError as e:
             message = "Humidity Sensor: Could not connect to SENSOR"
             self.is_connected = False
             logging.error("Could not connect to SENSOR")
+            print(e)
          
         return [self.is_connected, message]
 
@@ -227,7 +231,11 @@ class HumiditySensor(DAQ):
         if not self.is_connected:
             return False
 
-        result = []
+        try:
+            result = HumiditySensor.HSI.get_data(self.address)
+        except TimeoutError as e:
+            print('\t', e)
+            return False
         dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")  # Get current timestamp
         timestamp = time.time() - self.start_time
 

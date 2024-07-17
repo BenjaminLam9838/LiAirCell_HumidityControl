@@ -67,6 +67,8 @@ def fetch_data(daq_id):
     daq = daq_instances.get(daq_id)
     data = daq.pop_data_queue()
     # logging.debug(f"Data served [{daq_id:10}] = {len(data):3} points")
+    if daq_id == 'SHT1':
+        print(daq_id, data)
 
     return jsonify(data)
 
@@ -80,6 +82,8 @@ async def connect(daq_id):
             # Parse JSON data from request body
             requestData = request.get_json()
             port = requestData.get('port')
+            print(requestData)
+            print(daq_id)
 
             if not port:
                 return jsonify({'success': False, 'message': 'Port not provided', 'port': ''}), 400
@@ -95,7 +99,7 @@ async def connect(daq_id):
                 return jsonify({'success': False, 'message': message, 'port': daq.port}), 200
         
         except Exception as e:
-            print("\n\nError connecting to MFC on port " + daq.port)
+            print(f"\n\nError connecting to {type(daq)} on port " + daq.port)
             print(e)
             return jsonify({'success': False, 'message': str(e)}), 500
     

@@ -6,8 +6,8 @@ const DEFAULT_SAVE_DIRECTORY = '/Users/benjamin/Downloads'
 const components = {
     'MFC1': new MFC('MFC1', '/MFC1'),
     'MFC2': new MFC('MFC2', '/MFC2'),
-    'sensor1': new Sensor('SHT1', '/SHT1', 0x0F),
-    'sensor2': new Sensor('SHT2', '/SHT2', 0x1F),
+    'SHT1': new Sensor('SHT1', '/SHT1', 0x0F),
+    'SHT2': new Sensor('SHT2', '/SHT2', 0x1F),
     'test1': new DAQ('Test1', '/test1'),
     'test2': new DAQ('Test2', '/test2'),
     'test3': new DAQ('Test3', '/test3'),
@@ -16,8 +16,8 @@ const components = {
 // Initialize the plots
 const plots = {
     'main_plot': new ScrollingPlot('Test1', 'flowPlot_main', 100),
-    'subplot1': new ScrollingPlot('Test 2', 'flowPlot_sub1', 50),
-    'subplot2': new ScrollingPlot('Test 3', 'flowPlot_sub2', 10)
+    'subplot1': new ScrollingPlot('Subplot 2', 'flowPlot_sub1', 50),
+    'subplot2': new ScrollingPlot('Subplot 3', 'flowPlot_sub2', 10)
 };
 
 
@@ -33,6 +33,8 @@ $(document).ready(function() {
         console.log('Arbitrary Flow Button Clicked');
     });
 
+    $('#reinitializePlotsButton').click(initPlots); // Reinitialize the plots
+
     //Radio buttons for control mode
     $('#setpointControlButton').change(handleSetpointControlButton);
     $('#manualControlButton').change(handleManualControlButton);
@@ -43,7 +45,7 @@ $(document).ready(function() {
     console.log('Document Ready');
 });
 setInterval(() => {
-    updateSite();
+    updatePlots();
 }, 1000); 
 
 async function setupSite() {
@@ -55,28 +57,31 @@ async function setupSite() {
     for (let key in components) {
         components[key].checkConnection();
     }
+    initPlots();
+}
 
+async function initPlots() {
     // Fetch data from all the components, initialize the plots
     const frameData = await getData();
 
-    main_plot_data = frameData['test1'];
-    // add the test2 data to the main plot
-    main_plot_data['test3 y1'] = frameData['test3']['y1'];
+    sp1_data = {temperature: frameData['SHT1']['temperature'], humidity: frameData['SHT1']['humidity']};
+    console.log(sp1_data);
 
     plots['main_plot'].initializePlot(frameData['test1']);
-    plots['subplot1'].initializePlot(frameData['test2']);
+    plots['subplot1'].initializePlot(sp1_data);
     plots['subplot2'].initializePlot(frameData['test3']);
 }
 
-async function updateSite(){
+async function updatePlots(){
     const frameData = await getData();
     
-    const main_plot_data = frameData['test1'];
-    main_plot_data['test3 y1'] = frameData['test3']['y1'];
+    sp1_data = {temperature: frameData['SHT1']['temperature'], humidity: frameData['SHT1']['humidity']};
+    console.log(sp1_data);
 
-    plots['main_plot'].updatePlot(main_plot_data);
-    plots['subplot1'].updatePlot(frameData['test2']);
+    plots['main_plot'].updatePlot(frameData['test1']);
+    plots['subplot1'].updatePlot(sp1_data);
     plots['subplot2'].updatePlot(frameData['test3']);
+
 }
 
 async function getData(){
@@ -113,8 +118,8 @@ function drawFlowDiagram() {
 
     let MFC1 = components['MFC1'];
     let MFC2 = components['MFC2'];
-    let sensor1 = components['sensor1'];
-    let sensor2 = components['sensor2'];
+    let sensor1 = components['SHT1'];
+    let sensor2 = components['SHT2'];
 
     // Make the gas cylinder
     const gascyl = new GasCylinderDiagramComponent([50, 120], [80, 300]);

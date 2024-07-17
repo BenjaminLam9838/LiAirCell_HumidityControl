@@ -45,10 +45,10 @@ class ScrollingPlot {
 
     // Initialize the plot
     initializePlot(data) {
-        const traces = this.makeTraces(data);
-
+        const newTraces = this.makeTraces(data);
+        console.log(newTraces);
         // Plot with Plotly.newPlot()
-        Plotly.newPlot(this.htmlElementId, traces, this.layout);
+        Plotly.newPlot(this.htmlElementId, newTraces, this.layout);
     }
 
     updatePlot(data) {
@@ -59,6 +59,7 @@ class ScrollingPlot {
         const graphDiv = document.getElementById(this.htmlElementId);
     
         const newTraces = this.makeTraces(data); // Create new traces from new data
+        console.log(newTraces);
         // Extend existing traces with new data points
         newTraces.forEach((trace, index) => {
             Plotly.extendTraces(this.htmlElementId, {
