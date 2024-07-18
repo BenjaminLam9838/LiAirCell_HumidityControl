@@ -30,15 +30,22 @@ class ScrollingPlot {
         const traces = [];
 
         Object.keys(data).forEach(key => {
-            const x = data[key].datetime;
-            const y = data[key].values;
-            const trace = {
-                x: x,
-                y: y,
-                mode: 'lines+markers',
-                name: `${key.toUpperCase()}`
-            };
-            traces.push(trace);
+            //There may be errors if the data is not in the expected format
+            try {
+                const x = data[key].datetime;   //Get the x and y values from the data
+                const y = data[key].values;
+                
+                const trace = {
+                    x: x,
+                    y: y,
+                    mode: 'lines+markers',
+                    name: `${key.toUpperCase()}`
+                };
+                traces.push(trace);
+            } catch (error) {
+                console.debug('Could not make trace, likely no data found: ', `Trace Key: ${key}`, error);
+                return [];
+            }
         });
         return traces;
     }
@@ -46,7 +53,11 @@ class ScrollingPlot {
     // Initialize the plot
     initializePlot(data) {
         const newTraces = this.makeTraces(data);
-        console.log(newTraces);
+        if (newTraces.length === 0) {
+            console.debug(`${this.plotTitle}: `, 'Could not update traces');
+            return;
+        }
+
         // Plot with Plotly.newPlot()
         Plotly.newPlot(this.htmlElementId, newTraces, this.layout);
     }
@@ -57,9 +68,12 @@ class ScrollingPlot {
         }
     
         const graphDiv = document.getElementById(this.htmlElementId);
-    
         const newTraces = this.makeTraces(data); // Create new traces from new data
-        console.log(newTraces);
+        if (newTraces.length === 0) {
+            console.debug(`${this.plotTitle}: `, 'Could not update traces');
+            return;
+        }
+
         // Extend existing traces with new data points
         newTraces.forEach((trace, index) => {
             Plotly.extendTraces(this.htmlElementId, {
@@ -70,7 +84,6 @@ class ScrollingPlot {
     
         // Maintain a fixed number of points in the plot
         const currentLength = graphDiv.data[0].x.length;
-        // console.log(this.plotTitle, currentLength);
     
         if (currentLength > this.MAX_POINTS) {
             const excess = currentLength - this.MAX_POINTS;

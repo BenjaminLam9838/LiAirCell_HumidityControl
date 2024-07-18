@@ -78,6 +78,10 @@ class DAQ {
         });
     }
 
+    /**
+     * Checks the connection to the server.
+     * @returns {boolean} Returns true if the connection is successful, false otherwise.
+     */
     async checkConnection() {
         // Perform server request using fetch with GET method
         await fetch(`${this.accessPoint}/connect`)
@@ -124,22 +128,10 @@ class MFC extends DAQ {
         $('#mfcModalLabel').text(this.label);
         $('#mfcModal').modal('show');
 
-        // Attach event listener to form submit
-        $('#mfcForm').off('submit').on('submit', (e) => {
-            e.preventDefault();
-            this.connect();
-
-            console.log(this.port);
-            this.port = $('#mfcPort').val();
-            console.log(this.port);
-    
-            $('#mfcModal').modal('hide');
-        });
-
         // Attach event listener to connect button click
         $('#mfcForm-connectButton').off('click').on('click', () => {
-            const port = $('#mfcPort').val(); // Get the port value from input from the form
-            this.connect(port);
+            this.port = $('#mfcPort').val(); // Get the port value from input from the form
+            this.connect(this.port);
         });
     }
 
@@ -170,9 +162,8 @@ class MFC extends DAQ {
 class Sensor extends DAQ {
     static arduinoPort = '/dev/tty.usbmodem21101';
 
-    constructor(label, accessPoint, sensorAddress) {
+    constructor(label, accessPoint) {
         super(label, accessPoint);
-        this.sensorAddress = sensorAddress;
     }
 
     drawDiagram(position, bounds) {
@@ -186,40 +177,46 @@ class Sensor extends DAQ {
 
     // Method to update the attributes of the shape by bringing up a modal
     showEditModal() {
-        console.log("SHOWING1", this.isConnected);
         // Update the status of the Sensor badge indicator
         this.updateHTMLStatus();
 
-        // Show modal and populate with current values
-        $('#arduinoPort').val(Sensor.arduinoPort);
-        $('#sensorAddress').val('0x' + this.sensorAddress.toString(16).padStart(2, '0').toUpperCase());
+        // Show modal and populate with current values, if they exist
+        if (Sensor.arduinoPort) 
+            $('#arduinoPort').val(Sensor.arduinoPort);
+        if (this.sensorAddress) 
+            $('#sensorAddress').val('0x' + this.sensorAddress.toString(16).padStart(2, '0').toUpperCase());
         $('#sensorModalLabel').text(`${this.label}`);
         $('#sensorModal').modal('show');
 
-        // Attach event listener to form submit
-        $('#sensorForm').off('submit').on('submit', (e) => {
-            e.preventDefault();
-            
-            // Update shape attributes based on form values
-            console.log(Sensor.arduinoPort);
-            console.log(this.sensorAddress);
-
-            Sensor.arduinoPort = $('#arduinoPort').val();
-            this.sensorAddress = parseInt($('#sensorAddress').val());
-
-            console.log(Sensor.arduinoPort);
-            console.log(this.sensorAddress);
-
-            $('#sensorModal').modal('hide');
-        });
-
         // Attach event listener to connect button click
         $('#sensorForm-connectButton').off('click').on('click', () => {
-            const port = $('#arduinoPort').val(); // Get the port value from input from the form
-            const address = parseInt($('#sensorAddress').val(), 16); // Get the sensor address value from input from the form
+            Sensor.arduinoPort = $('#arduinoPort').val(); // Get the port value from input from the form
+            this.sensorAddress = parseInt($('#sensorAddress').val(), 16); // Get the sensor address value from input from the form
         
-            this.connect([port, address]);
+            this.port = [Sensor.arduinoPort, this.sensorAddress];
+            this.connect(this.port);
         });
+    }
+    
+    async checkConnection() {
+        // Perform server request using fetch with GET method
+        await fetch(`${this.accessPoint}/connect`)
+        .then(response => response.json())
+        .then(data => {
+            // Handle server response here
+            // console.log(`[Check Connection] ${this.label}`, data);
+            this.isConnected = data.success;
+            this.port = data.port;
+            Sensor.arduinoPort = this.port[0];
+            this.sensorAddress = this.port[1];
+        })
+        .catch(error => {
+            // Handle error scenario
+            console.error('Error checking connection:', error);
+        });
+
+        this.updateHTMLStatus();
+        return this.isConnected;
     }
 
     updateHTMLStatus() {

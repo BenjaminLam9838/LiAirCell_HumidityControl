@@ -6,8 +6,8 @@ const DEFAULT_SAVE_DIRECTORY = '/Users/benjamin/Downloads'
 const components = {
     'MFC1': new MFC('MFC1', '/MFC1'),
     'MFC2': new MFC('MFC2', '/MFC2'),
-    'SHT1': new Sensor('SHT1', '/SHT1', 0x0F),
-    'SHT2': new Sensor('SHT2', '/SHT2', 0x1F),
+    'SHT1': new Sensor('SHT1', '/SHT1'),
+    'SHT2': new Sensor('SHT2', '/SHT2'),
     'test1': new DAQ('Test1', '/test1'),
     'test2': new DAQ('Test2', '/test2'),
     'test3': new DAQ('Test3', '/test3'),
@@ -15,9 +15,9 @@ const components = {
 
 // Initialize the plots
 const plots = {
-    'main_plot': new ScrollingPlot('Test1', 'flowPlot_main', 100),
-    'subplot1': new ScrollingPlot('Subplot 2', 'flowPlot_sub1', 50),
-    'subplot2': new ScrollingPlot('Subplot 3', 'flowPlot_sub2', 10)
+    'main_plot': new ScrollingPlot('Main plot', 'flowPlot_main', 100),
+    'subplot1': new ScrollingPlot('Subplot 1', 'flowPlot_sub1', 50),
+    'subplot2': new ScrollingPlot('Subplot 2', 'flowPlot_sub2', 10)
 };
 
 
@@ -53,35 +53,32 @@ async function setupSite() {
     drawFlowDiagram();
 
     // Update the status of the system
-    //Check the connection status of the components, it will update the HTML status
+    //Check the connection status of the components, the function will also update the HTML status
     for (let key in components) {
         components[key].checkConnection();
     }
     initPlots();
+
+    // Update the recording status
+    //TODO: Check if the system is recording data
+    updateRecordingStatusHTML();
 }
 
 async function initPlots() {
     // Fetch data from all the components, initialize the plots
     const frameData = await getData();
 
-    sp1_data = {temperature: frameData['SHT1']['temperature'], humidity: frameData['SHT1']['humidity']};
-    console.log(sp1_data);
-
-    plots['main_plot'].initializePlot(frameData['test1']);
-    plots['subplot1'].initializePlot(sp1_data);
-    plots['subplot2'].initializePlot(frameData['test3']);
+    plots['main_plot'].initializePlot( processMainplot(frameData) );
+    plots['subplot1'].initializePlot( processSubplot1(frameData) );
+    plots['subplot2'].initializePlot( processSubplot2(frameData) );
 }
 
 async function updatePlots(){
     const frameData = await getData();
-    
-    sp1_data = {temperature: frameData['SHT1']['temperature'], humidity: frameData['SHT1']['humidity']};
-    console.log(sp1_data);
 
-    plots['main_plot'].updatePlot(frameData['test1']);
-    plots['subplot1'].updatePlot(sp1_data);
-    plots['subplot2'].updatePlot(frameData['test3']);
-
+    plots['main_plot'].updatePlot( processMainplot(frameData) );
+    plots['subplot1'].updatePlot( processSubplot1(frameData) );
+    plots['subplot2'].updatePlot( processSubplot2(frameData) );
 }
 
 async function getData(){
@@ -93,21 +90,18 @@ async function getData(){
     return data;
 }
 
+//Process the data to be plotted, basically extract the relevant data from the frameData.
+//This defines what each plot will show
+function processMainplot(frameData) {
+    return frameData['test1'];
+}
 
+function processSubplot1(frameData) {
+    return {temperature: frameData['SHT1']['temperature'], humidity: frameData['SHT1']['humidity']};
+}
 
-// Function to create a dummy Plotly graph
-function createDummyGraph(id) {
-    const trace = {
-        x: [1, 2, 3, 4, 5],
-        y: [1, 3, 2, 5, 4],
-        type: 'scatter'
-    };
-    const layout = {
-        title: `Graph ${id}`,
-        xaxis: { title: 'X Axis' },
-        yaxis: { title: 'Y Axis' }
-    };
-    Plotly.newPlot(id, [trace], layout);
+function processSubplot2(frameData) {
+    return frameData['test3'];
 }
 
 
@@ -226,19 +220,27 @@ function handleStartRecordingButton() {
     //Change the alert class to success, if the server responds with a success message
     if (serverSuccess) {
         console.log('Data Save Directory:', $('#dataRecordingFile').val());
-        $('#recordingStatusAlert').removeClass('alert-secondary').addClass('alert-success');    // Change the alert class to success
-        $('#recordingStatusAlert-text').text('Data Recording');                                  // Change the alert text
-        $('#startRecordingButton').prop('disabled', true);                                                 // Disable the start recording button
-        $('#abortRecordingButton').prop('disabled', false);                                                  // Enable the abort recording button
         isRecording = true;
+        updateRecordingStatusHTML();
     }
 }
 
 function handleAbortRecordingButton() {
     console.log('Abort Recording');
-    $('#recordingStatusAlert').removeClass('alert-success').addClass('alert-secondary');    // Change the alert class to light
-    $('#recordingStatusAlert-text').text('Data Not Recording');                                  // Change the alert text
-    $('#startRecordingButton').prop('disabled', false);                                                      // Enable the start recording button
-    $('#abortRecordingButton').prop('disabled', true);                                                     // Disable the abort recording button
     isRecording = false;
+    updateRecordingStatusHTML();
+}
+
+function updateRecordingStatusHTML() {
+    if (isRecording) {
+        $('#recordingStatusAlert').removeClass('alert-secondary').addClass('alert-success');       // Change the alert class to success
+        $('#recordingStatusAlert-text').text('Data Recording');                                  // Change the alert text
+        $('#startRecordingButton').prop('disabled', true);                                      // Disable the start recording button
+        $('#abortRecordingButton').prop('disabled', false);                                       // Enable the abort recording button
+    } else {
+        $('#recordingStatusAlert').removeClass('alert-success').addClass('alert-secondary');    // Change the alert class to light
+        $('#recordingStatusAlert-text').text('Data Not Recording');                                  // Change the alert text
+        $('#startRecordingButton').prop('disabled', false);                                                      // Enable the start recording button
+        $('#abortRecordingButton').prop('disabled', true);                                                     // Disable the abort recording button
+    }
 }

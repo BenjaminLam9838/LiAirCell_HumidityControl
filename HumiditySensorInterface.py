@@ -25,6 +25,9 @@ class HumiditySensorInterface:
         print("Board connected")
 
     def add_sensor_addr(self, sensor_addr):
+        if not self.is_board_connected:
+            raise Exception("HSI: Board not connected")
+
         # Attach the callback functions to the appropriate Firmata events
         for addr in sensor_addr:
             self.board.add_cmd_handler(addr, self._sysex_callback)

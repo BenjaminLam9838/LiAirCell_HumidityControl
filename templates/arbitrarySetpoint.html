@@ -1,0 +1,158 @@
+<!-- Body -->
+<div>
+    <p>
+        Define a custom humidity profile. The profile is executed when the "Start Recording" button is pressed.
+    </p>
+    <!-- Container for segment settings -->
+    <div id="segment-settings-container">
+        <!-- Plotly Chart -->
+        <div id="arbitrarySetpointModal-chart" style="width:100%;"></div>
+
+        <hr style=" height: 1px;
+                    background-color: #e6e6e6;
+                    margin: 20px 0;">
+
+        <!-- Single set of labels -->
+        <div class="row pb-2">
+            <div class="col-md-1"></div>
+            <div class="col-md-3">Duration [min]</div>
+            <div class="col-md-6">Segment String Definition</div>
+
+            <!-- Button to add additional row -->
+            <button type="button" class="btn btn-secondary btn-sm" id="add-segment-row">Add Row</button>
+        </div>
+
+        <!-- Default row for segment settings -->
+        <div class="row segment-row">
+            <div class="col-md-1" style="text-align: right;">1.</div>
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <input type="number" class="form-control" id="duration1" name="duration" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <input type="text" class="form-control" id="segment-string1" name="segment_string" required>
+                    </div>
+                </div>
+            </div>
+        </div>
+</div>
+
+<!-- Footer -->
+<div class="modal-footer">
+    <!-- Button to plot segments -->
+    <div class="mr-auto">
+        <button type="button" class="btn btn-outline-primary" id="plot-segments">Plot Segments</button>
+    </div>
+    <div class="col-md-6">
+        <div class="input-group">
+            <span class="input-group-text"> <b>Flow Rate</b> </span>
+            <input type="number" class="form-control" id="arbitrarySetpoint-flowRate" name="segment_duration">
+            <span class="input-group-text">[sccm]</span>
+        </div>
+    </div>
+    <!-- Button to submit values -->
+    <button type="button" class="btn btn-primary" id="submit-values">Submit</button>
+</div>
+</div>
+
+<!-- JavaScript for adding dynamic rows -->
+<script>
+    $(document).ready(function() {
+        // TODO: Initialize the modal with data, if it was previously set
+
+        // Counter for enumerating rows
+        let rowCount = 1;
+        // Add row button click event
+        $('#add-segment-row').click(function() {
+        rowCount++;
+        var newRow = `
+            <div class="row segment-row">
+                <div class="col-md-1" style="text-align: right;">${rowCount}.</div>
+                <div class="col-md-3">
+                <div class="form-group">
+                    <input type="number" class="form-control" id="duration${rowCount}" name="duration" required>
+                </div>
+                </div>
+                <div class="col-md-6">
+                <div class="form-group">
+                    <input type="text" class="form-control" id="segment-string${rowCount}" name="segment_string" required>
+                </div>
+                </div>
+            </div>
+        `;
+        $('#segment-settings-container').append(newRow);
+        });
+    
+        // Submit button click event
+        $('#plot-segments').click(function() {
+            // Collect all segment settings
+            let segmentSettings = getSegments()
+        
+            console.log('Sending Segments', segmentSettings);
+            // Send the segment settings to the server
+            fetch('/plot_flow_arbitrary', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                    },
+                body: JSON.stringify(segmentSettings)
+            }).then(response => response.json())    // Parse the JSON response
+            .then(data => {                         // Use the data to plot the segments
+                console.log('Plotting Segments:', data);
+                // Create a Plotly chart
+                makePlot(data);
+            }).catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    });
+
+    /**
+     * This function is responsible for collecting all segment settings from the form.
+     *
+     * @returns {Array} - An array of segment settings.
+     */
+    function getSegments() {
+        var segmentSettings = [];
+        $('.segment-row').each(function() {
+            var duration = $(this).find('input[name="duration"]').val();
+            var segmentString = $(this).find('input[name="segment_string"]').val();
+            segmentSettings.push({ duration: duration, 
+                                segmentString: segmentString });
+        });
+        return segmentSettings;
+    }
+
+    /**
+     * This function is responsible for creating a plot based on the provided data.
+     *
+     * @param {Object} data - The data used to generate the plot.
+     */
+    function makePlot(data) {
+        var chartData = [
+            {
+                x: data.time,
+                y: data.values,
+                type: 'scatter',
+                mode: 'lines',
+            }
+        ];
+
+        var layout = {
+            xaxis: {
+                title: 'Duration [min]'
+            },
+            margin: {
+                l: 50,  // left margin in pixels
+                r: 50,  // right margin in pixels
+                t: 10,  // top margin in pixels
+                b: 50,  // bottom margin in pixels
+                pad: 5  // padding around the plot area in pixels
+            },
+            height: 400
+        };
+        Plotly.newPlot('arbitrarySetpointModal-chart', chartData, layout);
+    }
+    </script>

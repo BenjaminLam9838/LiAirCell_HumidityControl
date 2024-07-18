@@ -26,7 +26,7 @@ import os
 print('\n\n\n')
 # Set up logging
 logging.basicConfig(level=logging.INFO, 
-                    format='%(asctime)s %(levelname)s | %(message)s',
+                    format='%(asctime)-9s%(levelname)-8s | %(message)s',
                     datefmt='%H:%M:%S',
                     handlers=[
                         logging.FileHandler("app.log"),  # Log to a file
@@ -76,31 +76,29 @@ def fetch_data(daq_id):
 @app.route('/<daq_id>/connect', methods=['POST', 'GET'])
 async def connect(daq_id):
     daq = daq_instances.get(daq_id)
+    logging.debug(f"Attempting to connect to {daq_id} on port {daq.port}")
 
     if request.method == 'POST':
         try:
             # Parse JSON data from request body
             requestData = request.get_json()
             port = requestData.get('port')
-            print(requestData)
-            print(daq_id)
+            logging.info(f"[CONNECT] post {daq_id}: {requestData}")
 
             if not port:
                 return jsonify({'success': False, 'message': 'Port not provided', 'port': ''}), 400
             
             # Attempt to connect to the daqonent with the provided port
             success, message = await daq.connect(port)
-            print("\n\nConnected on port " + daq.port)
-            print(message)
             
             if success:
+                logging.info("\n\nConnected on port " + daq.port)
                 return jsonify({'success': True, 'message': message, 'port': daq.port}), 200
             else:
                 return jsonify({'success': False, 'message': message, 'port': daq.port}), 200
         
         except Exception as e:
-            print(f"\n\nError connecting to {type(daq)} on port " + daq.port)
-            print(e)
+            logging.error(f"Error connecting to {type(daq)} on port {daq.port}\n{'':20}{e}")
             return jsonify({'success': False, 'message': str(e)}), 500
     
     if request.method == 'GET':
@@ -112,8 +110,8 @@ async def connect(daq_id):
         else:
             return jsonify({'success': False, 'message': f'No Connection on port {daq.port}', 'port': daq.port}), 200
 
-@app.route('/api/set_flow_arbitrary', methods=['POST', 'GET'])
-async def set_flow_arbitrary():
+@app.route('/plot_flow_arbitrary', methods=['POST', 'GET'])
+async def plot_flow_arbitrary():
     if request.method == 'POST':
         # Parse the JSON data from the request body
         requestData = request.get_json()
