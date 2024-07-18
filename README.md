@@ -55,6 +55,8 @@ The CC2D25S-SIP sensor is used for this project. This is a small sensor that com
 Notes
 ===
 #### [1] pyFirmata has issues in 3.11
+[pyFirmata's Github](https://github.com/tino/pyFirmata/tree/master) says it runs on python 3.7.
+
 When calling ```board = pyfirmata.Arduino('/dev/tty.usbmodem21101')```, an AttributeError is thrown: ```AttributeError: module 'inspect' has no attribute 'getargspec'. Did you mean: 'getargs'?```.
 ChatGPT says:
 > The error you're encountering is due to the use of the inspect.getargspec method in pyfirmata, which has been deprecated and removed in Python 3.11. Instead, inspect.getfullargspec should be used.
