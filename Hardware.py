@@ -7,6 +7,7 @@ import math
 import logging
 from alicat import FlowController
 from HumiditySensorInterface import HumiditySensorInterface
+import sys
 
 
 # Define a class to represent a generic Data Aquisition component.  
@@ -115,8 +116,6 @@ class MFC (DAQ):
             bool: True if the connection is successful, False otherwise.
         """
         self.port = port
-        print("\n\n")
-        print(self.port)
         try:
             self.fc = FlowController(address=self.port)
             message = "Connected to MFC on port " + self.port
@@ -172,16 +171,15 @@ class MFC (DAQ):
 class HumiditySensor(DAQ):
     HSI = None
     
-    def __init__(self):
+    def __init__(self, HSI):
         super().__init__()
-        self.port = ""
-        self.address = ""
+        self.port = None
 
         self.is_connected = False
 
-        #Initialize the interface with humidity sensors
+        #Save the interface with humidity sensors
         if HumiditySensor.HSI is None:
-            HumiditySensor.HSI = HumiditySensorInterface()
+            HumiditySensor.HSI = HSI
         
     # Attempts a connection to the Sensor
     async def connect(self, port):
@@ -191,32 +189,23 @@ class HumiditySensor(DAQ):
         Returns:
             bool: True if the connection is successful, False otherwise.
         """
-        self.port = port[0]
-        self.address = port[1]
+        self.port = port
 
-        # Try to connect to the Arduino
-        if HumiditySensor.HSI.is_board_connected == False:
-            try:
-                logging.info("Starting connection to BOARD")
-                HumiditySensor.HSI.connect_board(self.port)
-                message = "Connected to Sensor on port " + self.port
-            except:
-                message = "Humidity Sensor: Could not connect to BOARD"
-                self.is_connected = False
-                logging.error("Could not connect to BOARD")
 
         # Try to connect to the sensor
         try:
-            logging.info("Starting connection to SENSOR")
-            HumiditySensor.HSI.add_sensor_addr([self.address])
-            HumiditySensor.HSI.get_data(self.address) #This is to check if the sensor is connected, throws TimeoutError if not
-            message = f"Connected to Sensor on port {self.port} with address {hex(self.address)}"
+            logging.info("Attempting connection to SENSOR")
+            HumiditySensor.HSI.add_sensor_addr([self.port])
+            HumiditySensor.HSI.get_data(self.port) #This is to check if the sensor is connected, throws TimeoutError if not
+            message = f"Connected to Sensor with address {hex(self.port)}"
             self.is_connected = True
         except Exception as e:
             message = "Humidity Sensor: Could not connect to SENSOR"
             self.is_connected = False
             logging.error(f"Could not connect to SENSOR.\n{'':<20}Error: {e}")
+            return [self.is_connected, message]
          
+        logging.info(f"SENSOR connected on port {hex(self.port)}!")
         return [self.is_connected, message]
 
 
@@ -231,9 +220,9 @@ class HumiditySensor(DAQ):
             return False
 
         try:
-            result = HumiditySensor.HSI.get_data(self.address)
+            result = HumiditySensor.HSI.get_data(self.port)
         except TimeoutError as e:
-            print('\t', e)
+            logging.error("HumiditySensor, fetch_data", e)
             return False
         dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")  # Get current timestamp
         timestamp = time.time() - self.start_time

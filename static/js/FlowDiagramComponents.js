@@ -206,7 +206,7 @@ class SensorDiagramComponent extends FlowDiagramComponent {
         // Create the Sensor Display Texts
         //Humidity
         let pres_pos = [0.5, 0.7];
-        this.pres_label = new paper.PointText({
+        this.hum_label = new paper.PointText({
             point: pres_pos.map((dim, index) => position[index] + dim * bounds[index]),
             justification: 'center',
             fillColor: 'black',
@@ -230,7 +230,7 @@ class SensorDiagramComponent extends FlowDiagramComponent {
         this.group.addChild(this.boundingBox);
         this.group.addChild(this.display);
         this.group.addChild(this.title);
-        this.group.addChild(this.pres_label);
+        this.group.addChild(this.hum_label);
         this.group.addChild(this.temp_label);
 
         // Define the center of the inlet and outlet of the Sensor for the connection lines, put in pixel units
@@ -243,8 +243,7 @@ class SensorDiagramComponent extends FlowDiagramComponent {
         let formattedNumbers = newVals.map(num => `${num.toFixed(2)}`);
         console.log(formattedNumbers);
 
-        this.pres_label.content = `${formattedNumbers[0]} psi`;
-        this.flow_label.content = `${formattedNumbers[1]} sccm`;
+        this.hum_label.content = `${formattedNumbers[0]} %`;
         this.temp_label.content = `${formattedNumbers[2]} C`;
     }
     // Method to update the color of the display

@@ -16,8 +16,8 @@ const components = {
 // Initialize the plots
 const plots = {
     'main_plot': new ScrollingPlot('Main plot', 'flowPlot_main', 100),
-    'subplot1': new ScrollingPlot('Subplot 1', 'flowPlot_sub1', 50),
-    'subplot2': new ScrollingPlot('Subplot 2', 'flowPlot_sub2', 10)
+    'subplot1': new ScrollingPlot('Subplot 1', 'flowPlot_sub1', 100),
+    'subplot2': new ScrollingPlot('Subplot 2', 'flowPlot_sub2', 100)
 };
 
 
@@ -76,9 +76,18 @@ async function initPlots() {
 async function updatePlots(){
     const frameData = await getData();
 
-    plots['main_plot'].updatePlot( processMainplot(frameData) );
-    plots['subplot1'].updatePlot( processSubplot1(frameData) );
-    plots['subplot2'].updatePlot( processSubplot2(frameData) );
+
+    try {
+        plots['main_plot'].updatePlot( processMainplot(frameData) );
+    } catch (error) {    }
+
+    try {
+        plots['subplot1'].updatePlot( processSubplot1(frameData) );
+    } catch (error) {    }
+
+    try {
+        plots['subplot2'].updatePlot( processSubplot2(frameData) );
+    } catch (error) {    }
 }
 
 async function getData(){
@@ -97,7 +106,7 @@ function processMainplot(frameData) {
 }
 
 function processSubplot1(frameData) {
-    return {temperature: frameData['SHT1']['temperature'], humidity: frameData['SHT1']['humidity']};
+    return {SHT1temperature: frameData['SHT1']['temperature'], SHT1humidity: frameData['SHT1']['humidity']};
 }
 
 function processSubplot2(frameData) {

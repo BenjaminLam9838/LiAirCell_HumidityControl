@@ -76,12 +76,16 @@ class ScrollingPlot {
 
         // Extend existing traces with new data points
         newTraces.forEach((trace, index) => {
-            Plotly.extendTraces(this.htmlElementId, {
-                x: [trace.x],
-                y: [trace.y]
-            }, [index]);
+            try {
+                Plotly.extendTraces(this.htmlElementId, {
+                    x: [trace.x],
+                    y: [trace.y]
+                }, [index]);
+            } catch (error) {
+                console.log(`${this.plotTitle}: `, 'Could not extend traces', error);
+            }
         });
-    
+
         // Maintain a fixed number of points in the plot
         const currentLength = graphDiv.data[0].x.length;
     

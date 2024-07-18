@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, render_template, request
 from Helper_Functions import *
+from HumiditySensorInterface import HumiditySensorInterface
 import logging
 import Hardware
 import asyncio
@@ -10,9 +11,7 @@ import time
 import threading
 import uuid
 import os
-
-
-
+import sys
 
 
 # TO DO:
@@ -44,6 +43,8 @@ app.config['SERVER_NAME'] = 'localhost:4000'  # Replace with your server name an
 CONTROL_LOOP_ON = False
 CONTROL_LOOP_SETPOINTS = None
 CONTROL_LOOP_STARTTIME = None
+ARDUINO_PORT = '/dev/tty.usbmodem21101'
+HSI = HumiditySensorInterface()
 
 # Create instances of the hardware components (Data aquisition components)
 daq_instances = {
@@ -52,11 +53,10 @@ daq_instances = {
     'test3': Hardware.DummyDAQ(0.03),
     'MFC1': Hardware.MFC(),
     'MFC2': Hardware.MFC(),
-    'SHT1': Hardware.HumiditySensor(),
-    'SHT2': Hardware.HumiditySensor(),
+    'SHT1': Hardware.HumiditySensor(HSI),
+    'SHT2': Hardware.HumiditySensor(HSI),
 }
 hg = Hardware.HardwareGroup(daq_instances, 10)
-
 
 
 ######################
@@ -67,8 +67,9 @@ def fetch_data(daq_id):
     daq = daq_instances.get(daq_id)
     data = daq.pop_data_queue()
     # logging.debug(f"Data served [{daq_id:10}] = {len(data):3} points")
-    if daq_id == 'SHT1':
-        print(daq_id, data)
+
+    # if daq_id == 'SHT1':
+    #     logging.info(f"Data served [{daq_id:10}] = {data}")
 
     return jsonify(data)
 
@@ -92,7 +93,6 @@ async def connect(daq_id):
             success, message = await daq.connect(port)
             
             if success:
-                logging.info("\n\nConnected on port " + daq.port)
                 return jsonify({'success': True, 'message': message, 'port': daq.port}), 200
             else:
                 return jsonify({'success': False, 'message': message, 'port': daq.port}), 200
@@ -137,15 +137,17 @@ def index():
 ######################
 ### Hardware run loop
 ######################
-def start_control_loop():
-    CONTROL_LOOP_ON = True
-    CONTROL_LOOP_STARTTIME = time.time()
-
-
-
 async def run_loop():
     # Setup
     
+    # Try a connection to the Arduino
+    try:
+        logging.info(f"Starting connection to BOARD on port {ARDUINO_PORT}")
+        HSI.connect_board(ARDUINO_PORT)
+    except:
+        logging.error("Could not connect to BOARD, CHANGE PORT")
+        sys.exit()  
+    logging.info(f"HSI connected on port {ARDUINO_PORT}")
 
     # Looping
     while True:
@@ -158,7 +160,6 @@ async def run_loop():
             # Set the MFCs
             pass
         
-
         await asyncio.sleep(0.05)
 
 

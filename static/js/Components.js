@@ -160,8 +160,6 @@ class MFC extends DAQ {
 }
 
 class Sensor extends DAQ {
-    static arduinoPort = '/dev/tty.usbmodem21101';
-
     constructor(label, accessPoint) {
         super(label, accessPoint);
     }
@@ -180,20 +178,15 @@ class Sensor extends DAQ {
         // Update the status of the Sensor badge indicator
         this.updateHTMLStatus();
 
-        // Show modal and populate with current values, if they exist
-        if (Sensor.arduinoPort) 
-            $('#arduinoPort').val(Sensor.arduinoPort);
-        if (this.sensorAddress) 
-            $('#sensorAddress').val('0x' + this.sensorAddress.toString(16).padStart(2, '0').toUpperCase());
+        // Show modal and populate with current value of the port (I2C address), if they exist
+        if (this.port) 
+            $('#sensorAddress').val('0x' + this.port.toString(16).padStart(2, '0').toUpperCase());
         $('#sensorModalLabel').text(`${this.label}`);
         $('#sensorModal').modal('show');
 
         // Attach event listener to connect button click
         $('#sensorForm-connectButton').off('click').on('click', () => {
-            Sensor.arduinoPort = $('#arduinoPort').val(); // Get the port value from input from the form
-            this.sensorAddress = parseInt($('#sensorAddress').val(), 16); // Get the sensor address value from input from the form
-        
-            this.port = [Sensor.arduinoPort, this.sensorAddress];
+            this.port = parseInt($('#sensorAddress').val(), 16); // Get the sensor address value from input from the form
             this.connect(this.port);
         });
     }
@@ -204,17 +197,14 @@ class Sensor extends DAQ {
         .then(response => response.json())
         .then(data => {
             // Handle server response here
-            // console.log(`[Check Connection] ${this.label}`, data);
             this.isConnected = data.success;
             this.port = data.port;
-            Sensor.arduinoPort = this.port[0];
-            this.sensorAddress = this.port[1];
         })
         .catch(error => {
             // Handle error scenario
             console.error('Error checking connection:', error);
         });
-
+        
         this.updateHTMLStatus();
         return this.isConnected;
     }

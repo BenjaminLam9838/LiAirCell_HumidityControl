@@ -14,7 +14,7 @@
 #define POWER_PIN2 4
 #define POWER_PIN3 5
 #define CC_OLD_ADDR 0x28
-#define CC_NEW_ADDR 0x32
+#define CC_NEW_ADDR 0x30
 
 void setup() {
   Wire.begin();
@@ -27,23 +27,23 @@ void setup() {
   pinMode(A0, INPUT);
 
 
-  bool cmdStarted = startCommandMode(CC_OLD_ADDR);    //Don't put anything above this (no power on), it messes things up for some reason
-  if (cmdStarted) {
-    Serial.println("COMMAND STARTED");
+  // bool cmdStarted = startCommandMode(CC_OLD_ADDR);    //Don't put anything above this (no power on), it messes things up for some reason
+  // if (cmdStarted) {
+  //   Serial.println("COMMAND STARTED");
 
-    readCommandMode(CC_OLD_ADDR, 0x1C);  //Read the 0x1C address (CUST CONFIG, default is 0x0028)
-    Serial.println("REGISTER READ");
-    writeCommandMode(CC_OLD_ADDR, 0x5C, CC_NEW_ADDR & 0x00FF);
-    Serial.println("REGISTER WRITTEN");
-    readCommandMode(CC_OLD_ADDR, 0x1C);  //Read the 0x1C address to confirm write
-    Serial.println("REGISTER READ");
+  //   readCommandMode(CC_OLD_ADDR, 0x1C);  //Read the 0x1C address (CUST CONFIG, default is 0x0028)
+  //   Serial.println("REGISTER READ");
+  //   writeCommandMode(CC_OLD_ADDR, 0x5C, CC_NEW_ADDR & 0x00FF);
+  //   Serial.println("REGISTER WRITTEN");
+  //   readCommandMode(CC_OLD_ADDR, 0x1C);  //Read the 0x1C address to confirm write
+  //   Serial.println("REGISTER READ");
 
-    startNormalMode(CC_OLD_ADDR);  //Normal mode locks in the new address by ending command mode
-    scanI2CBus();
-    readCC2(CC_NEW_ADDR);
-  }
+  //   startNormalMode(CC_OLD_ADDR);  //Normal mode locks in the new address by ending command mode
+  //   scanI2CBus();
+  //   readCC2(CC_NEW_ADDR);
+  // }
 
-  Serial.println("NOT WRITTEN");
+  // Serial.println("NOT WRITTEN");
 }
 
 

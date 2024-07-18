@@ -22,7 +22,6 @@ class HumiditySensorInterface:
         self.it = pyfirmata.util.Iterator(self.board)
         self.it.start()
         self.is_board_connected = True
-        print("Board connected")
 
     def add_sensor_addr(self, sensor_addr):
         if not self.is_board_connected:
