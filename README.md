@@ -1,7 +1,7 @@
 LiAirCell_Humidity Control
 ===
 > [!WARNING]
-> Still under development. Graphs on main page are filled with test data, but the connection logic for MFC and Arduino work.  Just need to assemble gas lines and test.
+> Still under development. Some graphs on main page are filled with test data, but the connection logic for MFC and Arduino work.  Just need to assemble gas lines and test.
 
 
 A pure O<sub>2</sub> stream is split between two mass-flow controllers (MFCs) with one of the streams humidified. These are recombined to produce a gas stream of desired humidity.  The output humidity is measured and the flow through each MFC is regulated by closed-loop feedback: 
@@ -15,7 +15,7 @@ git clone https://github.com/BenjaminLam9838/LiAirCell_HumidityControl
 cd LiAirCell_HumidityControl
 ```
 
-Create a virtual environment and install the dependencies:
+Create a virtual environment and install the dependencies.  App built on Python 3.9.13 [pyFirmata has issues in 3.11 [1]](#[1]-pyFirmata-has-issues-in-3.11)
 ```bash
 python3.9 -m venv .venv
 source .venv/bin/activate
@@ -51,5 +51,12 @@ Connections between components is done with polypropylene tubing and push-to-con
 
 ### Humidity/Temperature Sensors
 The CC2D25S-SIP sensor is used for this project. This is a small sensor that communicates over I2C.  The default address is ```0x28```.
+
+Notes
+===
+#### [1] pyFirmata has issues in 3.11
+When calling ```board = pyfirmata.Arduino('/dev/tty.usbmodem21101')```, an AttributeError is thrown: ```AttributeError: module 'inspect' has no attribute 'getargspec'. Did you mean: 'getargs'?```.
+ChatGPT says:
+> The error you're encountering is due to the use of the inspect.getargspec method in pyfirmata, which has been deprecated and removed in Python 3.11. Instead, inspect.getfullargspec should be used.
 
 
