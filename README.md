@@ -15,7 +15,7 @@ git clone https://github.com/BenjaminLam9838/LiAirCell_HumidityControl
 cd LiAirCell_HumidityControl
 ```
 
-Create a virtual environment and install the dependencies.  App built on Python 3.9.13 [pyFirmata has issues in 3.11 [1]](#[1]-pyfirmata-has-issues-in-3.11)
+Create a virtual environment and install the dependencies.  App built on Python 3.9.13 [pyFirmata has issues in 3.11 [1]](#1-pyfirmata-has-issues-in-311)
 ```bash
 python3.9 -m venv .venv
 source .venv/bin/activate
