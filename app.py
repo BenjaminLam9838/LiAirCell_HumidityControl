@@ -48,7 +48,7 @@ HSI = HumiditySensorInterface()
 
 # Create instances of the hardware components (Data aquisition components)
 daq_instances = {
-    'test1': Hardware.DummyDAQ(1),
+    'test1': Hardware.DummyDAQ(0.05),
     'test2': Hardware.DummyDAQ(0.5),
     'test3': Hardware.DummyDAQ(0.03),
     'MFC1': Hardware.MFC(),

@@ -119,7 +119,7 @@ class MFCDiagramComponent extends FlowDiagramComponent {
             fillColor: 'black',
             fontWeight: 'bold',
             fontSize: fontSize,
-            content: 'XX.XX psi'
+            content: '-- psi'
         });
         //Flow Rate
         let flow_pos = [labels_leftBound, display_pos[1] + 0.5 *display_size[1]];
@@ -129,7 +129,7 @@ class MFCDiagramComponent extends FlowDiagramComponent {
             fillColor: 'black',
             fontWeight: 'bold',
             fontSize: fontSize,
-            content: 'XX.XX sccm'
+            content: '-- sccm'
         });
         //Temperature
         let temp_pos = [labels_leftBound, display_pos[1] + 0.8 *display_size[1]];
@@ -139,7 +139,7 @@ class MFCDiagramComponent extends FlowDiagramComponent {
             fillColor: 'black',
             fontWeight: 'bold',
             fontSize: fontSize,
-            content: 'XX.XX C'
+            content: '-- °C'
         });
 
         // Set up a click event on the group
@@ -158,12 +158,9 @@ class MFCDiagramComponent extends FlowDiagramComponent {
 
     // Method to update the text content
     updateText(newVals) {
-        let formattedNumbers = newVals.map(num => `${num.toFixed(2)}`);
-        console.log(formattedNumbers);
-
-        this.pres_label.content = `${formattedNumbers[0]} psi`;
-        this.flow_label.content = `${formattedNumbers[1]} sccm`;
-        this.temp_label.content = `${formattedNumbers[2]} C`;
+        this.pres_label.content = newVals[0];
+        this.flow_label.content = newVals[1];
+        this.temp_label.content = newVals[2];
     }
 
     // Method to update the color of the display
@@ -212,7 +209,7 @@ class SensorDiagramComponent extends FlowDiagramComponent {
             fillColor: 'black',
             fontWeight: 'bold',
             fontSize: 18,
-            content: 'XX.XX %'
+            content: '-- %RH'
         });
         //Temperature
         let temp_pos = [0.5, 0.9];
@@ -222,7 +219,17 @@ class SensorDiagramComponent extends FlowDiagramComponent {
             fillColor: 'black',
             fontWeight: 'bold',
             fontSize: 18,
-            content: 'XX.XX C'
+            content: '-- °C'
+        });
+        //Port ID (I2C address)
+        let port_pos = [0.5, 0.3];
+        this.port_label = new paper.PointText({
+            point: port_pos.map((dim, index) => position[index] + dim * bounds[index]),
+            justification: 'center',
+            fillColor: 'black',
+            fontWeight: 'bold',
+            fontSize: 18,
+            content: ''
         });
 
         // Set up a click event on the group
@@ -232,6 +239,7 @@ class SensorDiagramComponent extends FlowDiagramComponent {
         this.group.addChild(this.title);
         this.group.addChild(this.hum_label);
         this.group.addChild(this.temp_label);
+        this.group.addChild(this.port_label);
 
         // Define the center of the inlet and outlet of the Sensor for the connection lines, put in pixel units
         this.inlet =  new paper.Point([this.bounds.left, this.display.bounds.center.y]);
@@ -240,11 +248,9 @@ class SensorDiagramComponent extends FlowDiagramComponent {
 
     // Method to update the text content
     updateText(newVals) {
-        let formattedNumbers = newVals.map(num => `${num.toFixed(2)}`);
-        console.log(formattedNumbers);
-
-        this.hum_label.content = `${formattedNumbers[0]} %`;
-        this.temp_label.content = `${formattedNumbers[2]} C`;
+        this.port_label.content = newVals[0];
+        this.hum_label.content = newVals[1];
+        this.temp_label.content = newVals[2];
     }
     // Method to update the color of the display
     updateColor(newColor) {

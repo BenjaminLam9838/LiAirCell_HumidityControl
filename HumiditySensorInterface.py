@@ -41,13 +41,13 @@ class HumiditySensorInterface:
             time.sleep(0.05)
             tries += 1
         if self.response is None:
-            raise TimeoutError("No response received from the sensor.")
+            raise Exception("No response received from the sensor.")
 
         # If we get here, we have a response.  The first byte is the sensor address
         #Check if the data bytes are all 1, if so, the sensor is not connected
         if all([b == 0xFF for b in self.response[1:]]):
             self.response = None
-            raise TimeoutError(f"Sensor {hex(sensor_addr)}: not connected")
+            raise Exception(f"Sensor {hex(sensor_addr)}: not connected")
 
         #Convert the bytes to humidity and temperature
         ret = {'sensor_addr': f"{hex(self.response[0])}",

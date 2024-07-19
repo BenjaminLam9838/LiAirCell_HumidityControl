@@ -70,7 +70,8 @@ class DAQ {
             // Handle server response here
             console.log('Server Response:', data);
             this.isConnected = data.success;
-            this.updateHTMLStatus();
+            this.updateModal();
+            this.updateDiagram();
         })
         .catch(error => {
             // Handle error scenario
@@ -97,12 +98,20 @@ class DAQ {
             console.error('Error checking connection:', error);
         });
 
-        this.updateHTMLStatus();
+        this.updateDiagram();
         return this.isConnected;
+    }
+    truncateNumber(num) {
+        if (typeof num === 'number' && !isNaN(num)) {
+            return num.toFixed(2);
+        }
+        return num;
     }
 
     // Implement this method in the child classes
-    updateHTMLStatus() {}
+    updateModal() {}
+    updateDiagram() {}
+    updateDiagramText() {}
 }
 class MFC extends DAQ {
     constructor(label, accessPoint) {
@@ -121,7 +130,7 @@ class MFC extends DAQ {
     // Method to update the attributes of the shape by bringing up a modal
     showEditModal() {
         // Update the status of the MFC badge indicator
-        this.updateHTMLStatus();
+        this.updateModal();
 
         // Show modal and populate with current values
         $('#mfcPort').val(this.port);
@@ -135,7 +144,7 @@ class MFC extends DAQ {
         });
     }
 
-    updateHTMLStatus() {
+    updateModal() {
         const statusIndicatorBadge = $('#mfcStatus');
 
         if (this.isConnected) {
@@ -157,6 +166,33 @@ class MFC extends DAQ {
             this.diagram.updateColor('red');
         }
     }
+
+    updateDiagram() {
+        if (this.isConnected) {
+            // Update the color of the diagram
+            this.diagram.updateColor('green');
+        } else {            
+            // Update the color of the diagram
+            this.diagram.updateColor('red');
+
+            //Update the text of the diagram
+            this.diagram.updateText(['--', '--', '--']);
+        }
+    }
+
+    updateDiagramText(lastValues) {
+        if (this.isConnected) {
+            this.diagram.updateText([ 
+                        `${this.truncateNumber(lastValues['flow_rate'])} sccm`, 
+                        `${this.truncateNumber(lastValues['pressure'])} psi`, 
+                        `${this.truncateNumber(lastValues['temperature'])} °C`
+                        ]);
+        } else {            
+            //Update the text of the diagram
+            this.diagram.updateText(['--', '--', '--']);
+        }
+
+    }
 }
 
 class Sensor extends DAQ {
@@ -176,11 +212,13 @@ class Sensor extends DAQ {
     // Method to update the attributes of the shape by bringing up a modal
     showEditModal() {
         // Update the status of the Sensor badge indicator
-        this.updateHTMLStatus();
+        this.updateModal();
 
         // Show modal and populate with current value of the port (I2C address), if they exist
-        if (this.port) 
-            $('#sensorAddress').val('0x' + this.port.toString(16).padStart(2, '0').toUpperCase());
+        let strVal = "";
+        if (this.port)
+            strVal = '0x' + this.port.toString(16).padStart(2, '0').toUpperCase();
+        $('#sensorAddress').val(strVal);
         $('#sensorModalLabel').text(`${this.label}`);
         $('#sensorModal').modal('show');
 
@@ -196,6 +234,7 @@ class Sensor extends DAQ {
         await fetch(`${this.accessPoint}/connect`)
         .then(response => response.json())
         .then(data => {
+            console.log(`[Check Connection] ${this.label}`, data);
             // Handle server response here
             this.isConnected = data.success;
             this.port = data.port;
@@ -205,11 +244,11 @@ class Sensor extends DAQ {
             console.error('Error checking connection:', error);
         });
         
-        this.updateHTMLStatus();
+        this.updateDiagram();
         return this.isConnected;
     }
 
-    updateHTMLStatus() {
+    updateModal() {
         const statusIndicatorBadge = $('#sensorStatus');
 
         if (this.isConnected) {
@@ -227,5 +266,31 @@ class Sensor extends DAQ {
             // Update the color of the diagram
             this.diagram.updateColor('red');
         }
+    }
+
+    updateDiagram() {
+        if (this.isConnected) {
+            // Update the color of the diagram
+            this.diagram.updateColor('green');
+
+        } else {            
+            // Update the color of the diagram
+            this.diagram.updateColor('red');
+        }
+    }
+
+    updateDiagramText(lastValues) {
+        console.log(this.label, lastValues);
+        if (this.isConnected) {
+            this.diagram.updateText([
+                        `${lastValues['sensor_addr'].toString(16).padStart(2, '0')}`,
+                        `${this.truncateNumber(lastValues['humidity'])} %RH`, 
+                        `${this.truncateNumber(lastValues['temperature'])} °C`
+                        ]);
+        } else {    
+            //Update the text of the diagram
+            this.diagram.updateText(['', '--', '--']);
+        }
+
     }
 }

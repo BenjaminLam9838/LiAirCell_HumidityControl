@@ -42,12 +42,32 @@ $(document).ready(function() {
 
     $('#startRecordingButton').click(handleStartRecordingButton);       //Form submission for saving the file and recording data
     $('#abortRecordingButton').click(handleAbortRecordingButton);       //Abort the recording
+
+    //Event listeners for the modal form submission
+    $('#sensorForm').submit((e) => {
+        e.preventDefault(); // Prevent the default form submission
+    });
+    $('#mfcForm').submit((e) => {
+        e.preventDefault(); // Prevent the default form submission
+    });
+
+
     console.log('Document Ready');
 });
-setInterval(() => {
-    updatePlots();
+
+// Loop function to refresh the site
+setInterval(async () => {
+
+    const frameData = await getData();
+    updatePlots(frameData);
+    updateDiagramText(frameData);
+    updateConnectionStatus();
 }, 1000); 
 
+
+// --------------------------------
+// FUNCTIONS    
+// ----------------------------
 async function setupSite() {
     // Draw the Flow Diagram for the system
     drawFlowDiagram();
@@ -73,10 +93,7 @@ async function initPlots() {
     plots['subplot2'].initializePlot( processSubplot2(frameData) );
 }
 
-async function updatePlots(){
-    const frameData = await getData();
-
-
+async function updatePlots(frameData){
     try {
         plots['main_plot'].updatePlot( processMainplot(frameData) );
     } catch (error) {    }
@@ -88,6 +105,27 @@ async function updatePlots(){
     try {
         plots['subplot2'].updatePlot( processSubplot2(frameData) );
     } catch (error) {    }
+}
+
+// Update the connection status of the components
+function updateConnectionStatus() {
+    for (let key in components) {
+        components[key].checkConnection();
+    }
+}
+
+// Update the text of the diagram
+function updateDiagramText(frameData) {
+    //FrameData has the polled data of all components, get the last set of values from each component
+    for (let key in components) {
+        const data = frameData[key];
+        const lastValues = Object.fromEntries(
+            Object.entries(data).map(([property, value]) => [property, value.values[value.values.length - 1]])
+        );
+
+        // Submit the last set of values to the update function of the component
+        components[key].updateDiagramText(lastValues);
+    }
 }
 
 async function getData(){
@@ -106,11 +144,21 @@ function processMainplot(frameData) {
 }
 
 function processSubplot1(frameData) {
-    return {SHT1temperature: frameData['SHT1']['temperature'], SHT1humidity: frameData['SHT1']['humidity']};
+    data = {SHT1temperature: frameData['SHT1']['temperature'], 
+        SHT1humidity: frameData['SHT1']['humidity'],
+        SHT2temperature: frameData['SHT2']['temperature'],
+        SHT2humidity: frameData['SHT2']['humidity']
+    };
+    return data;
 }
 
 function processSubplot2(frameData) {
-    return frameData['test3'];
+    data = {SHT1temperature: frameData['SHT1']['temperature'], 
+            SHT1humidity: frameData['SHT1']['humidity'],
+            SHT2temperature: frameData['SHT2']['temperature'],
+            SHT2humidity: frameData['SHT2']['humidity']
+        };
+    return data;
 }
 
 
@@ -217,6 +265,7 @@ function handleArbitraryControlButton() {
     $('#arbitrary-settings').removeClass('d-none');       // Show the arbitrary setpoint settings
 }
 
+//Start Recording button handler
 function handleStartRecordingButton() {
     console.log('Start Recording');
     // Handle the form submission
@@ -234,12 +283,17 @@ function handleStartRecordingButton() {
     }
 }
 
+//Abort Recording button handler
 function handleAbortRecordingButton() {
     console.log('Abort Recording');
     isRecording = false;
     updateRecordingStatusHTML();
 }
 
+//Function to handle the recording status HTML
+// Disables the Start Recording button and enables the Abort Recording button when recording
+// or vice versa
+// Also changes the alert text and class to indicate the recording status
 function updateRecordingStatusHTML() {
     if (isRecording) {
         $('#recordingStatusAlert').removeClass('alert-secondary').addClass('alert-success');       // Change the alert class to success

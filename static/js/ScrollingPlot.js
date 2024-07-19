@@ -54,12 +54,11 @@ class ScrollingPlot {
     initializePlot(data) {
         const newTraces = this.makeTraces(data);
         if (newTraces.length === 0) {
-            console.debug(`${this.plotTitle}: `, 'Could not update traces');
             return;
         }
 
-        // Plot with Plotly.newPlot()
-        Plotly.newPlot(this.htmlElementId, newTraces, this.layout);
+        // Plot a new plot
+        Plotly.react(this.htmlElementId, newTraces, this.layout);       
     }
 
     updatePlot(data) {
@@ -74,7 +73,7 @@ class ScrollingPlot {
             return;
         }
 
-        // Extend existing traces with new data points
+        // Extend existing traces with new data points, otherwise add new traces
         newTraces.forEach((trace, index) => {
             try {
                 Plotly.extendTraces(this.htmlElementId, {
@@ -82,13 +81,13 @@ class ScrollingPlot {
                     y: [trace.y]
                 }, [index]);
             } catch (error) {
-                console.log(`${this.plotTitle}: `, 'Could not extend traces', error);
+                Plotly.addTraces(this.htmlElementId, trace);
             }
         });
 
         // Maintain a fixed number of points in the plot
         const currentLength = graphDiv.data[0].x.length;
-    
+
         if (currentLength > this.MAX_POINTS) {
             const excess = currentLength - this.MAX_POINTS;
     
