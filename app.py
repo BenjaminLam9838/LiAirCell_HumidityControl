@@ -14,14 +14,6 @@ import os
 import sys
 
 
-# TO DO:
-# 1. Implement the set_flow_arbitrary route:
-#    - Make a class that handles the flow rate setpoints, should make a new thread 
-#      that starts a timer and sets the flow rate at each time point. Make the 
-#      constructor the list of segments
-# Bad idea, just put in in the run loop.  This will work better since theres only one thread, so no blocking conditions
-
-
 print('\n\n\n')
 # Set up logging
 logging.basicConfig(level=logging.INFO, 
@@ -35,16 +27,19 @@ logging.basicConfig(level=logging.INFO,
 # Change Flask's logging to only show warnings and above
 logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
-# Flask application
-app = Flask(__name__, static_url_path='/static')
-app.config['SERVER_NAME'] = 'localhost:4000'  # Replace with your server name and port
-
-# GLOBAL VARIABLES
+# GLOBAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 CONTROL_LOOP_ON = False
 CONTROL_LOOP_SETPOINTS = None
 CONTROL_LOOP_STARTTIME = None
+
+# Humidity Sensor Interface, handles Arduino communication
 ARDUINO_PORT = '/dev/tty.usbmodem21101'
 HSI = HumiditySensorInterface()
+
+# Flask application
+app = Flask(__name__, static_url_path='/static')
+app.config['SERVER_NAME'] = 'localhost:4000'  # Replace with your server name and port
 
 # Create instances of the hardware components (Data aquisition components)
 daq_instances = {

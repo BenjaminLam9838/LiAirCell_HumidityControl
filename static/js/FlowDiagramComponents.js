@@ -209,7 +209,7 @@ class SensorDiagramComponent extends FlowDiagramComponent {
             fillColor: 'black',
             fontWeight: 'bold',
             fontSize: 18,
-            content: '-- %RH'
+            content: '--'
         });
         //Temperature
         let temp_pos = [0.5, 0.9];
@@ -219,7 +219,7 @@ class SensorDiagramComponent extends FlowDiagramComponent {
             fillColor: 'black',
             fontWeight: 'bold',
             fontSize: 18,
-            content: '-- °C'
+            content: '--'
         });
         //Port ID (I2C address)
         let port_pos = [0.5, 0.3];

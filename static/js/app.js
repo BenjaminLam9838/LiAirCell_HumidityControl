@@ -15,9 +15,9 @@ const components = {
 
 // Initialize the plots
 const plots = {
-    'main_plot': new ScrollingPlot('Main plot', 'flowPlot_main', 100),
-    'subplot1': new ScrollingPlot('Subplot 1', 'flowPlot_sub1', 100),
-    'subplot2': new ScrollingPlot('Subplot 2', 'flowPlot_sub2', 100)
+    'main_plot': new ScrollingPlot('Main plot', 'flowPlot_main', 20),
+    'subplot1': new ScrollingPlot('Subplot 1', 'flowPlot_sub1', 20),
+    'subplot2': new ScrollingPlot('Subplot 2', 'flowPlot_sub2', 20)
 };
 
 
@@ -140,24 +140,33 @@ async function getData(){
 //Process the data to be plotted, basically extract the relevant data from the frameData.
 //This defines what each plot will show
 function processMainplot(frameData) {
-    return frameData['test1'];
+    data = {
+            MFC1_flowrate: frameData['MFC1']['flowrate'], 
+            MFC2_flowrate: frameData['MFC2']['flowrate'],
+            SHT1_temperature: frameData['SHT1']['temperature'], 
+            SHT1_humidity: frameData['SHT1']['humidity'],
+            SHT2_temperature: frameData['SHT2']['temperature'],
+            SHT2_humidity: frameData['SHT2']['humidity'],
+            test1_y1: frameData['test1']['y1'],
+            test1_y2: frameData['test1']['y2'],
+    };
+
+    return data;
 }
 
 function processSubplot1(frameData) {
-    data = {SHT1temperature: frameData['SHT1']['temperature'], 
-        SHT1humidity: frameData['SHT1']['humidity'],
-        SHT2temperature: frameData['SHT2']['temperature'],
-        SHT2humidity: frameData['SHT2']['humidity']
+    data = {
+        MFC1_flowrate: frameData['MFC1']['flowrate'],
+        MFC1_setpoint: frameData['MFC1']['setpoint'],
     };
     return data;
 }
 
 function processSubplot2(frameData) {
-    data = {SHT1temperature: frameData['SHT1']['temperature'], 
-            SHT1humidity: frameData['SHT1']['humidity'],
-            SHT2temperature: frameData['SHT2']['temperature'],
-            SHT2humidity: frameData['SHT2']['humidity']
-        };
+    data = {
+        MFC2_flowrate: frameData['MFC2']['flowrate'],
+        MFC2_setpoint: frameData['MFC2']['setpoint'],
+    };
     return data;
 }
 

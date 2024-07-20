@@ -230,11 +230,12 @@ class Sensor extends DAQ {
     }
     
     async checkConnection() {
+        // console.log(this.label, this.isConnected)
         // Perform server request using fetch with GET method
         await fetch(`${this.accessPoint}/connect`)
         .then(response => response.json())
         .then(data => {
-            console.log(`[Check Connection] ${this.label}`, data);
+            // console.log(`[Check Connection] ${this.label}`, data);
             // Handle server response here
             this.isConnected = data.success;
             this.port = data.port;
@@ -280,13 +281,13 @@ class Sensor extends DAQ {
     }
 
     updateDiagramText(lastValues) {
-        console.log(this.label, lastValues);
-        if (this.isConnected) {
+        // console.log(this.label, lastValues, this.isConnected);
+        if (this.isConnected && Object.keys(lastValues).length > 0) {
             this.diagram.updateText([
-                        `${lastValues['sensor_addr'].toString(16).padStart(2, '0')}`,
-                        `${this.truncateNumber(lastValues['humidity'])} %RH`, 
-                        `${this.truncateNumber(lastValues['temperature'])} °C`
-                        ]);
+                `${lastValues['sensor_addr'].toString(16).padStart(2, '0')}`,
+                `${this.truncateNumber(lastValues['humidity'])} %RH`, 
+                `${this.truncateNumber(lastValues['temperature'])} °C`
+                ]);
         } else {    
             //Update the text of the diagram
             this.diagram.updateText(['', '--', '--']);

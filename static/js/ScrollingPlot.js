@@ -4,10 +4,10 @@
  * @class
  */
 class ScrollingPlot {
-    constructor(plotTitle, htmlElementId, MAX_POINTS = 1000) {
+    constructor(plotTitle, htmlElementId, MAX_TIME_WINDOW_s = 10) {
         this.plotTitle = plotTitle;
         this.htmlElementId = htmlElementId;
-        this.MAX_POINTS = MAX_POINTS;
+        this.MAX_TIME_WINDOW_ms = MAX_TIME_WINDOW_s*1000;
 
         this.layout = {
             title: this.plotTitle,
@@ -59,6 +59,7 @@ class ScrollingPlot {
 
         // Plot a new plot
         Plotly.react(this.htmlElementId, newTraces, this.layout);       
+        this.scrollXAxis(document.getElementById(this.htmlElementId));
     }
 
     updatePlot(data) {
@@ -74,50 +75,74 @@ class ScrollingPlot {
         }
 
         // Extend existing traces with new data points, otherwise add new traces
-        newTraces.forEach((trace, index) => {
-            try {
+        newTraces.forEach((trace) => {
+            
+            //Get the index of the trace with the same name in graphDiv.data
+            const index = graphDiv.data.findIndex((element) => element.name === trace.name);
+
+            //If the trace exists, extend it, otherwise add a new trace
+            if (index !== -1) {
+                // Extend existing trace
                 Plotly.extendTraces(this.htmlElementId, {
                     x: [trace.x],
                     y: [trace.y]
                 }, [index]);
-            } catch (error) {
+            } else {
+                // Add new trace
                 Plotly.addTraces(this.htmlElementId, trace);
             }
         });
 
-        // Maintain a fixed number of points in the plot
-        const currentLength = graphDiv.data[0].x.length;
+        // // Maintain a fixed number of points in each of the traces
+        // graphDiv.data.forEach(trace => {
+        //     const traceLength = trace.x.length;
+        //     console.log(trace.name, traceLength);
 
-        if (currentLength > this.MAX_POINTS) {
-            const excess = currentLength - this.MAX_POINTS;
-    
-            // Slice the data to remove excess points
-            graphDiv.data.forEach(trace => {
-                trace.x = trace.x.slice(excess);
-                trace.y = trace.y.slice(excess);
-            });
-    
-            const minY = [];
-            const maxY = [];
-            
-            // Collect min and max values for all traces
-            graphDiv.data.forEach(trace => {
-                minY.push(Math.min(...trace.y));
-                maxY.push(Math.max(...trace.y));
-            });
-    
-            // Calculate buffer based on the range of all data
-            const yBuffer = 0.1 * (Math.max(...maxY) - Math.min(...minY));
-            
-            Plotly.relayout(this.htmlElementId, {
-                'xaxis.range': [graphDiv.data[0].x[0], graphDiv.data[0].x[graphDiv.data[0].x.length - 1]],
-                'yaxis.range': [
-                    Math.min(...minY) - yBuffer,
-                    Math.max(...maxY) + yBuffer,
-                ]
-            });
-        }
+        //     if (traceLength > this.MAX_POINTS) {
+        //         const excess = traceLength - this.MAX_POINTS;
+
+        //         // Slice the data to remove excess points
+        //         trace.x = trace.x.slice(excess);
+        //         trace.y = trace.y.slice(excess);
+
+        //         Plotly.relayout(this.htmlElementId, {
+        //             'xaxis.autorange': true,
+        //             'yaxis.autorange': true
+        //         });
+        //     }
+        // });
+
+        // Scale the x-axis to show the last MAX_TIME_WINDOW_s seconds of data (scrolling effect)
+        this.scrollXAxis(graphDiv);
     }
-    
 
+    scrollXAxis(graphDiv) {
+        // Variables to track the global x-axis range, this tracks the latest x-value across all traces
+        let globalMaxX = Number.NEGATIVE_INFINITY;
+
+        // Maintain a fixed time window for the x-axis and trim the data accordingly
+        graphDiv.data.forEach(trace => {
+            // Assuming x values are time-based and sorted in ascending order
+            const maxX = Math.max(...trace.x);
+            const minX = maxX - this.MAX_TIME_WINDOW_ms;
+
+            // Update the global min and max x-values
+            if (maxX > globalMaxX) globalMaxX = maxX;
+
+            // Filter the trace data to keep only points within the time window
+            const validIndices = trace.x.map((value, index) => value >= minX ? index : -1).filter(index => index !== -1);
+
+            trace.x = validIndices.map(index => trace.x[index]);
+            trace.y = validIndices.map(index => trace.y[index]);
+
+            // console.log(trace.name, trace.x);
+        });
+
+        console.log([globalMaxX-this.MAX_TIME_WINDOW_ms, globalMaxX]);
+        // Perform a single relayout to update the x-axis range
+        Plotly.relayout(this.htmlElementId, {
+            'xaxis.range': [globalMaxX-this.MAX_TIME_WINDOW_ms, globalMaxX],
+            'yaxis.autorange': true
+        });
+    }
 }

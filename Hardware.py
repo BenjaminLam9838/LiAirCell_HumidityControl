@@ -221,8 +221,10 @@ class HumiditySensor(DAQ):
 
         try:
             result = HumiditySensor.HSI.get_data(self.port)
-        except TimeoutError as e:
+        except Exception as e:
             logging.error("HumiditySensor, fetch_data", e)
+            if str(e).find("not connected") > 0:
+                self.is_connected = False
             return False
         dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")  # Get current timestamp
         timestamp = time.time() - self.start_time
@@ -252,7 +254,7 @@ class DummyDAQ(DAQ):
         timestamp = time.time() - DAQ.start_time
         dt = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
         data = {'timestamp': timestamp, 'datetime': dt, 
-            'values': {'y1': math.sin(2*math.pi*self.freq * timestamp), 'y2': math.cos(2*math.pi*self.freq * timestamp)}}
+            'values': {'y1': 20*math.sin(2*math.pi*self.freq * timestamp) + 20, 'y2': 20*math.cos(2*math.pi*self.freq * timestamp) +20}}
         
         # Put the data into the data queue for a sliding window
         self._track_data(data)
@@ -286,7 +288,8 @@ class HardwareGroup:
     async def fetch_data(self):
         for daq_key in self.daq_instances.keys():
             current_data = await self.daq_instances[daq_key].fetch_data()
-            self._push_to_list(daq_key, current_data)
+            if current_data is not False:
+                self._push_to_list(daq_key, current_data)
     
     #Manage the list so that it stays at the max list length
     def _push_to_list(self, daq_key, data):
