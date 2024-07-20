@@ -37,7 +37,7 @@ Communication with the Alicat MFCs is done through [Alicat's python library](htt
 
 ### Arduino + Firmata
 > [!IMPORTANT]
-> Requires connection to Arduino to function.
+> Application requires connection to Arduino to function. Arduino serves as sensor controller, so without a connection, we have no sensors.
 
 Communication with the Arduino is done with Firmata.  The ```LAC_firmata.ino``` file must be uploaded to an Arduino and connected to the Flask server using the webapp.  Click on the sensor in the Flow Diagram to bring up the connection settings:
 ![image](https://github.com/user-attachments/assets/c39bb345-d019-4eba-9cba-07edf16e6e1d)
