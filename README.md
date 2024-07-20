@@ -1,7 +1,12 @@
 LiAirCell_Humidity Control
 ===
 > [!WARNING]
-> Still under development. Some graphs on main page are filled with test data, but the connection logic for MFC and Arduino work.  Just need to assemble gas lines and test.
+> Requires connection to Arduino to function.
+> Still under development. To do:
+> - [x] Connection/display with humidity sensors
+> - [x] Connection/display with MFCs
+> - [ ] Control System
+> - [ ] Assemble full gas-flow integration
 
 
 A pure O<sub>2</sub> stream is split between two mass-flow controllers (MFCs) with one of the streams humidified. These are recombined to produce a gas stream of desired humidity.  The output humidity is measured and the flow through each MFC is regulated by closed-loop feedback: 
