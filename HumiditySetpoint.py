@@ -1,9 +1,10 @@
 import numpy as np
 import sympy as sp
 
-######################
-### HELPER FUNCTIONS 
-######################
+# Class to generate the rule to set the setpoint of the humidity
+class HumiditySetpoint:
+    pass
+
 def parse_timeseries(expression_duration_pairs):
     """
     Parses a list of expression-duration pairs and generates a time series of values.
@@ -42,3 +43,4 @@ def parse_timeseries(expression_duration_pairs):
         current_time += duration
 
     return np.array(time_s), np.array(values)
+

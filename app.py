@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, render_template, request
-from Helper_Functions import *
+from HumiditySetpoint import *
 from HumiditySensorInterface import HumiditySensorInterface
 import logging
 import Hardware
@@ -29,6 +29,8 @@ logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
 # GLOBAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+CONTROL_MODE = 'MANUAL'
+CONTROL_PARAMS = None
 CONTROL_LOOP_ON = False
 CONTROL_LOOP_SETPOINTS = None
 CONTROL_LOOP_STARTTIME = None
@@ -123,6 +125,56 @@ async def plot_flow_arbitrary():
         return jsonify({'time': time_s.tolist(), 'values': values.tolist()})
     # if request.method == 'GET':
     #     jsonify({'time': time_s.tolist(), 'values': values.tolist()})
+
+@app.route('/get_current_control_method', methods=['GET'])
+def get_current_control_method():
+    return jsonify({'control_mode': CONTROL_MODE}), 200
+
+@app.route('/set_manual_control', methods=['POST', 'GET'])
+def set_manual_control():
+    requestData = request.get_json()
+
+    # Set the control scheme to manual
+    CONTROL_MODE = 'MANUAL'
+
+    # Record the parameters for the manual control
+    CONTROL_PARAMS = requestData
+
+    # Set the MFCs to the desired flow rates
+    CONTROL_LOOP_ON = False
+
+
+    return jsonify({'success': True, 'message': "MFC manually set"}), 200
+
+@app.route('/set_setpoint_control', methods=['POST'])
+def set_setpoint_control():
+    requestData = request.get_json()
+
+    # Set the control scheme to setpoint
+    CONTROL_MODE = 'SETPOINT'
+    # Record the parameters for the setpoint control
+    CONTROL_PARAMS = requestData
+
+    # Set the arbitrary flow rates for the MFCs: setup the control loop logic and setpoint callback function
+    CONTROL_LOOP_ON = True
+
+
+    return jsonify({'success': True, 'message': "MFC setpoints set"}), 200
+
+@app.route('/set_arbitrary_control', methods=['POST'])
+def set_arbitrary_control():
+    requestData = request.get_json()
+    requestData = [req for req in requestData if req['segmentString'] != '' or req['duration'] != ''] #Remove the empty sections
+
+    # Set the control scheme to arbitrary
+    CONTROL_MODE = 'ARBITRARY'
+    # Record the parameters for the arbitrary control
+    CONTROL_PARAMS = [ (sect['segmentString'], float(sect['duration'])) for sect in requestData ]     # Set the expression-duration pairs as the control parameters
+
+    # Set the arbitrary flow rates for the MFCs: setup the control loop logic and setpoint callback function
+    CONTROL_LOOP_ON = True
+
+    return jsonify({'success': True, 'message': "MFC arbitrary set"}), 200
 
 
 @app.route('/')

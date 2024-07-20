@@ -301,4 +301,3 @@ class HardwareGroup:
     def get_list(self, daq_key):
         return self.daq_lists[daq_key]
 
-            

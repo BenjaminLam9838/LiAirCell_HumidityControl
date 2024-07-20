@@ -24,19 +24,22 @@
 
         <!-- Default row for segment settings -->
         <div class="row segment-row">
-            <div class="col-md-1" style="text-align: right;">1.</div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <input type="number" class="form-control" id="duration1" name="duration" required>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <input type="text" class="form-control" id="segment-string1" name="segment_string" required>
-                    </div>
+            <div class="col-md-1" style="text-align: right;"></div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <input type="number" class="form-control" id="duration1" name="duration" required>
                 </div>
             </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <input type="text" class="form-control" id="segment-string1" name="segment_string" required>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-danger btn-sm remove-segment-row">X</button>
+            </div>
         </div>
+
 </div>
 
 <!-- Footer -->
@@ -60,43 +63,48 @@
 <!-- JavaScript for adding dynamic rows -->
 <script>
     $(document).ready(function() {
-        // TODO: Initialize the modal with data, if it was previously set
-
         // Counter for enumerating rows
-        let rowCount = 1;
+
         // Add row button click event
         $('#add-segment-row').click(function() {
-        rowCount++;
-        var newRow = `
-            <div class="row segment-row">
-                <div class="col-md-1" style="text-align: right;">${rowCount}.</div>
-                <div class="col-md-3">
-                <div class="form-group">
-                    <input type="number" class="form-control" id="duration${rowCount}" name="duration" required>
+            var newRow = `
+                <div class="row segment-row">
+                    <div class="col-md-1" style="text-align: right;"></div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <input type="number" class="form-control" name="duration" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <input type="text" class="form-control" name="segment_string" required>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-danger btn-sm remove-segment-row">X</button>
+                    </div>
                 </div>
-                </div>
-                <div class="col-md-6">
-                <div class="form-group">
-                    <input type="text" class="form-control" id="segment-string${rowCount}" name="segment_string" required>
-                </div>
-                </div>
-            </div>
-        `;
-        $('#segment-settings-container').append(newRow);
+            `;
+            $('#segment-settings-container').append(newRow);
         });
-    
+
+        // Delegate click event for removing segment rows
+        $(document).on('click', '.remove-segment-row', function() {
+            $(this).closest('.segment-row').remove();
+        });
+
         // Submit button click event
         $('#plot-segments').click(function() {
             // Collect all segment settings
-            let segmentSettings = getSegments()
-        
+            let segmentSettings = getSegments();
+            
             console.log('Sending Segments', segmentSettings);
             // Send the segment settings to the server
             fetch('/plot_flow_arbitrary', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
-                    },
+                },
                 body: JSON.stringify(segmentSettings)
             }).then(response => response.json())    // Parse the JSON response
             .then(data => {                         // Use the data to plot the segments
