@@ -1,12 +1,5 @@
 LiAirCell_Humidity Control
 ===
-> [!WARNING]
-> Still under development. To do:
-> - [x] Connection/display with humidity sensors
-> - [x] Connection/display with MFCs
-> - [ ] Control System
-> - [ ] Assemble full gas-flow integration
-
 
 A pure O<sub>2</sub> stream is split between two mass-flow controllers (MFCs) with one of the streams humidified. These are recombined to produce a gas stream of desired humidity.  The output humidity is measured and the flow through each MFC is regulated by closed-loop feedback: 
 <img width="968" alt="FlowDiagramSchematic" src="https://github.com/user-attachments/assets/1f5faf27-43f0-4f96-b58d-8f3220fa087e">
@@ -75,4 +68,9 @@ When calling ```board = pyfirmata.Arduino('/dev/tty.usbmodem21101')```, an Attri
 ChatGPT says:
 > The error you're encountering is due to the use of the inspect.getargspec method in pyfirmata, which has been deprecated and removed in Python 3.11. Instead, inspect.getfullargspec should be used.
 
+#### To do
+- [x] Connection/display with humidity sensors
+- [x] Connection/display with MFCs
+- [ ] Control System
+- [ ] Assemble full gas-flow integration
 
