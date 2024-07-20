@@ -32,14 +32,15 @@ Connection to both MFCs and the sensors is required for the application to funct
 
 ### MFCs
 Communication with the Alicat MFCs is done through [Alicat's python library](https://www.alicat.com/using-your-alicat/alicat-python-and-command-prompt-communication/). Click on the MFC in the Flow Diagram to bring up the connection settings:
-<img width="1511" alt="image" src="https://github.com/user-attachments/assets/39db4e3c-1609-4d49-ac07-07592e316a05">
+![image](https://github.com/user-attachments/assets/358e5860-da27-4229-aff6-899b0483c947)
+
 - MFC Port: serial port the MFC is attached to
 
 ### Arduino + Firmata
 Communication with the Arduino is done with Firmata.  The ```LAC_firmata.ino``` file must be uploaded to an Arduino and connected to the Flask server using the webapp.  Click on the sensor in the Flow Diagram to bring up the connection settings:
-<img width="1510" alt="image" src="https://github.com/user-attachments/assets/852876c4-f6cb-4bea-a09a-94138dd9e8da">
-- Arduino Port: serial port Arduino is attached to
-- Sensor Address: I2C address of the sensor
+![image](https://github.com/user-attachments/assets/c39bb345-d019-4eba-9cba-07edf16e6e1d)
+
+- Sensor Address: I2C address of the sensor (default 0x28)
 
 _How the Firmata protocol works:_
 The python server makes a sysex request with the same command ID as the I2C address of the sensor.  The Arduino then queries the sensor at that address for humidity/temperature data and echoes that back to the server as two floats.
@@ -55,7 +56,13 @@ Main Parts List:
 Connections between components is done with polypropylene tubing and push-to-connect fittings from McMaster (nominal size 1/8").  Stainless steel NPT fittings are used as needed, mainly for the mixing of the gas streams and for the humidity/temperature sensors.
 
 ### Humidity/Temperature Sensors
-The CC2D25S-SIP sensor is used for this project. This is a small sensor that communicates over I2C.  The default address is ```0x28```.
+The CC2D25S-SIP sensor is used for this project. This is a small sensor that communicates over I2C.  The default address is ```0x28```. The ```chipcap2_setAddress.ino``` script is used to reset the I2C address of the component.
+These sensors are contained in a [1/8" NPT pipe nipple](https://www.mcmaster.com/4830K111/) and filled with epoxy.  This can be screwed into a T-fitting for inline gas measurement:
+
+<p align="center">
+<img src='https://github.com/user-attachments/assets/4dea40d3-c7f1-4583-9557-30a6555dddc7' width=700 align=center>
+</p>
+
 
 Notes
 ===
