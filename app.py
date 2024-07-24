@@ -38,6 +38,14 @@ CONTROL_LOOP_STARTTIME = None
 # Humidity Sensor Interface, handles Arduino communication
 ARDUINO_PORT = '/dev/tty.usbmodem21101'
 HSI = HumiditySensorInterface()
+# Try a connection to the Arduino
+try:
+    logging.info(f"Starting connection to BOARD on port {ARDUINO_PORT}")
+    HSI.connect_board(ARDUINO_PORT)
+    logging.info(f"HSI connected on port {ARDUINO_PORT}")
+except:
+    logging.error("Could not connect to BOARD, CHANGE PORT")
+    sys.exit()  # Exit the program if the Arduino connection fails
 
 # Flask application
 app = Flask(__name__, static_url_path='/static')
@@ -186,15 +194,6 @@ def index():
 ######################
 async def run_loop():
     # Setup
-    
-    # Try a connection to the Arduino
-    try:
-        logging.info(f"Starting connection to BOARD on port {ARDUINO_PORT}")
-        HSI.connect_board(ARDUINO_PORT)
-    except:
-        logging.error("Could not connect to BOARD, CHANGE PORT")
-        sys.exit()  
-    logging.info(f"HSI connected on port {ARDUINO_PORT}")
 
     # Looping
     while True:

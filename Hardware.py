@@ -120,6 +120,7 @@ class MFC (DAQ):
             self.fc = FlowController(address=self.port)
             message = "Connected to MFC on port " + self.port
             self.is_connected = True
+            logging.info(f"Connected to MFC on port {self.port} \n{"":20}{self.fc}")
         except:
             message = "Could not connect to MFC"
             self.is_connected = False
