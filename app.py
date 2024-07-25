@@ -13,6 +13,7 @@ import uuid
 import os
 import sys
 
+TEST_MODE = True   # Set to True to run in test mode, averts required hardware connections
 
 print('\n\n\n')
 # Set up logging
@@ -53,13 +54,13 @@ hg = Hardware.HardwareGroup(daq_instances, 10)
 
 # Try a connection to the Arduino
 try:
-    logging.info(f"Starting connection to BOARD on port {ARDUINO_PORT}")
+    logging.info(f"Starting connection to ARDUINO on port {ARDUINO_PORT}")
     HSI.connect_board(ARDUINO_PORT)
     # Connect to the MFCs
     logging.info(f"HSI connected on port {ARDUINO_PORT}")
 except:
-    logging.error("Could not connect to BOARD, CHANGE PORT")
-    sys.exit()  # Exit the program if the Arduino connection fails
+    logging.error("Could not connect to ARDUINO, CHANGE PORT")
+    if not TEST_MODE: sys.exit()  # Exit the program if the Arduino connection fails
 
 # Try a connection to the MFCs
 try:
@@ -72,7 +73,7 @@ try:
     logging.info(f"Connected to MFC2 on port {MFC2_PORT}")
 except:
     logging.error("Could not connect to MFCs, CHANGE PORT")
-    sys.exit()
+    if not TEST_MODE: sys.exit()
 
 # Flask application
 app = Flask(__name__, static_url_path='/static')
