@@ -173,7 +173,12 @@ class MFC (DAQ):
         """
         if not self.is_connected:
             return False
-        await self.fc.set_flow_rate(flow_rate)
+        try:
+            await self.fc.set_flow_rate(flow_rate)
+        except Exception as e:
+            logging.error("MFC, set_flow_rate", e)
+            self.is_connected = False
+            return False
         logging.info(f"Set MFC flow rate to {flow_rate}, port {self.port}")
         return True
 
