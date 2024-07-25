@@ -62,21 +62,19 @@ except:
     if not TEST_MODE: sys.exit()  # Exit the program if the Arduino connection fails
 
 # Try a connection to the MFCs
-try:
-    logging.info(f"Starting connection to MFC1 on port {MFC1_PORT}")
-    asyncio.run(daq_instances['MFC1'].connect(MFC1_PORT))
-    logging.info(f"Connected to MFC1 on port {MFC1_PORT}")
+logging.info(f"Starting connection to MFC1 on port {MFC1_PORT}")
+asyncio.run(daq_instances['MFC1'].connect(MFC1_PORT))
+logging.info(f"Starting connection to MFC2 on port {MFC2_PORT}")
+asyncio.run(daq_instances['MFC2'].connect(MFC2_PORT))
 
-    logging.info(f"Starting connection to MFC2 on port {MFC2_PORT}")
-    asyncio.run(daq_instances['MFC2'].connect(MFC2_PORT))
-    logging.info(f"Connected to MFC2 on port {MFC2_PORT}")
-
+if  daq_instances['MFC1'].is_connected and daq_instances['MFC2'].is_connected:
     # If connected, set MFCs to 0 flow
+    logging.info("MFCs connected")
     CONTROL_MODE = 'MAN'
     CONTROL_PARAMS = {'MFC1': 0, 'MFC2': 0}
     hg.add_flask_command( daq_instances['MFC1'].set_flow_rate, {'flow_rate': 0} )
     hg.add_flask_command( daq_instances['MFC2'].set_flow_rate, {'flow_rate': 0} )
-except:
+else:
     logging.error("Could not connect to MFCs, CHANGE PORT")
     if not TEST_MODE: sys.exit()
 
