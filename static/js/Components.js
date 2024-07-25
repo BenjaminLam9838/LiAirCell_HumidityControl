@@ -181,9 +181,10 @@ class MFC extends DAQ {
     }
 
     updateDiagramText(lastValues) {
+        // console.log(this.label, lastValues, this.isConnected);
         if (this.isConnected) {
             this.diagram.updateText([ 
-                        `${this.truncateNumber(lastValues['flow_rate'])} sccm`, 
+                        `${this.truncateNumber(lastValues['volumetric_flow'])} sccm`, 
                         `${this.truncateNumber(lastValues['pressure'])} psi`, 
                         `${this.truncateNumber(lastValues['temperature'])} °C`
                         ]);

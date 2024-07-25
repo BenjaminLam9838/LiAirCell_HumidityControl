@@ -77,46 +77,32 @@
                             <!-- State Selection on the left -->
                             <div class="col-md-2">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="controlState" id="manualControlButton" value="manualControl" checked>
+                                    <input class="form-check-input" type="radio" name="controlState" id="manualControlButton" value="MAN" checked>
                                     <label class="form-check-label" for="manualControlButton">Manual Control</label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="controlState" id="setpointControlButton" value="setpointControl">
+                                    <input class="form-check-input" type="radio" name="controlState" id="setpointControlButton" value="SPT">
                                     <label class="form-check-label" for="setpointControlButton">Setpoint Control</label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="controlState" id="arbitraryControlButton" value="arbitraryControl">
+                                    <input class="form-check-input" type="radio" name="controlState" id="arbitraryControlButton" value="ARB">
                                     <label class="form-check-label" for="arbitraryControlButton">Arbitrary Control</label>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <div class="pt-3">
+                                    <button type="submit" class="btn btn-primary" id="controlSettings-submitButton">Set</button>
                                 </div>
                             </div>
                     
                             <!-- Parameters and Submit Button on the right -->
                             <div class="col-md-10">
                                 <form id="controlForm">
-                                    <div class="row" id="setpoint-manual-settings">
+                                    <div class="row">
                                         <div class="col-md-10">
-                                            <!-- Parameters for State 1 -->
-                                            <div id="setpointControlParams" class="state-params">
-                                                <div class="row">
-                                                    <div class="col-md-6">
-                                                        <div class="input-group">
-                                                            <span class="input-group-text"> <b>Flow Rate</b> </span>
-                                                            <input type="number" class="form-control col-md-11" id="setpointControl-flowRate" name="setpointControl-flowRate">
-                                                            <span class="input-group-text">[sccm]</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-6">
-                                                        <div class="input-group">
-                                                            <span class="input-group-text"> <b>Humidity</b> </span>
-                                                            <input type="number" class="form-control col-md-11" id="setpointControl-humidity" name="setpointControl-humidity">
-                                                            <span class="input-group-text">[%]</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                            
-                                            <!-- Parameters for State 2 -->
-                                            <div id="manualControlParams" class="state-params d-none">
+                                            <!-- Parameters for Manual Control -->
+                                            <div id="manualControlParams" class="state-params">
+                                                <p>Directly set the MFC flow rates [0 to 100] sccm</p>
                                                 <div class="row">
                                                     <div class="col-md-6">
                                                         <div class="input-group">
@@ -136,9 +122,25 @@
                                             </div>
                                         </div>
 
-                                        <!-- Submit Button -->
-                                        <div class="col-md-2" id="controlSettings-submitButton">
-                                            <button type="submit" class="btn btn-primary">Set</button>
+                                        <!-- Parameters for Setpoint Control -->
+                                        <div id="setpointControlParams" class="state-params d-none">
+                                            <p>Define the flow rate [0-100 sccm] and humidity [0-100%] constant setpoints </p>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="input-group">
+                                                        <span class="input-group-text"> <b>Flow Rate</b> </span>
+                                                        <input type="number" class="form-control col-md-11" id="setpointControl-flowRate" name="setpointControl-flowRate">
+                                                        <span class="input-group-text">[sccm]</span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="input-group">
+                                                        <span class="input-group-text"> <b>Humidity</b> </span>
+                                                        <input type="number" class="form-control col-md-11" id="setpointControl-humidity" name="setpointControl-humidity">
+                                                        <span class="input-group-text">[%]</span>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 

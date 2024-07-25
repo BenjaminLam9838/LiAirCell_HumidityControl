@@ -92,26 +92,7 @@ class ScrollingPlot {
                 Plotly.addTraces(this.htmlElementId, trace);
             }
         });
-
-        // // Maintain a fixed number of points in each of the traces
-        // graphDiv.data.forEach(trace => {
-        //     const traceLength = trace.x.length;
-        //     console.log(trace.name, traceLength);
-
-        //     if (traceLength > this.MAX_POINTS) {
-        //         const excess = traceLength - this.MAX_POINTS;
-
-        //         // Slice the data to remove excess points
-        //         trace.x = trace.x.slice(excess);
-        //         trace.y = trace.y.slice(excess);
-
-        //         Plotly.relayout(this.htmlElementId, {
-        //             'xaxis.autorange': true,
-        //             'yaxis.autorange': true
-        //         });
-        //     }
-        // });
-
+        
         // Scale the x-axis to show the last MAX_TIME_WINDOW_s seconds of data (scrolling effect)
         this.scrollXAxis(graphDiv);
     }
@@ -138,7 +119,7 @@ class ScrollingPlot {
             // console.log(trace.name, trace.x);
         });
 
-        console.log([globalMaxX-this.MAX_TIME_WINDOW_ms, globalMaxX]);
+        // console.log([globalMaxX-this.MAX_TIME_WINDOW_ms, globalMaxX]);
         // Perform a single relayout to update the x-axis range
         Plotly.relayout(this.htmlElementId, {
             'xaxis.range': [globalMaxX-this.MAX_TIME_WINDOW_ms, globalMaxX],

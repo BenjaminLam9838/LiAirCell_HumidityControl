@@ -120,7 +120,7 @@ class MFC (DAQ):
             self.fc = FlowController(address=self.port)
             message = "Connected to MFC on port " + self.port
             self.is_connected = True
-            logging.info(f"Connected to MFC on port {self.port} \n{"":20}{self.fc}")
+            logging.info(f"Connected to MFC on port {self.port} \n{'':20} {self.fc}")
         except:
             message = "Could not connect to MFC"
             self.is_connected = False
@@ -131,7 +131,9 @@ class MFC (DAQ):
 
     async def fetch_data(self):
         """
-        Fetches data from the connected MFC.
+        Fetches data from the connected MFC. 
+        fc.get() takes ~200ms to complete, with SD of 5ms. This is the 
+        bottleneck in this function and takes the most time; the rest of the function is negligible.
 
         Returns:
             bool: True if data is fetched successfully, False otherwise.
@@ -139,7 +141,12 @@ class MFC (DAQ):
         if not self.is_connected:
             return False
 
-        fc_result = await self.fc.get()
+        try:
+            fc_result = await self.fc.get()
+        except Exception as e:
+            logging.error("MFC, fetch_data", e)
+            self.is_connected = False
+            return False
         dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")  # Get current timestamp
         timestamp = time.time() - self.start_time
 
@@ -156,7 +163,7 @@ class MFC (DAQ):
     # Set the flow rate of the MFC
     async def set_flow_rate(self, flow_rate):
         """
-        Sets the flow rate of the hardware.
+        Sets the flow rate of the hardware. fc.set_flow_rate() takes ~200ms to complete, with SD of 3ms.
 
         Parameters:
         - flow_rate: The desired flow rate to be set.

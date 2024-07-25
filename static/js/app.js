@@ -1,6 +1,7 @@
 //Define State variables
 let isRecording = false;
 const DEFAULT_SAVE_DIRECTORY = '/Users/benjamin/Downloads'
+const CONTROL_MODE = 'MAN'
 
 // Define the components of the system
 const components = {
@@ -35,16 +36,21 @@ $(document).ready(function() {
 
     $('#reinitializePlotsButton').click(initPlots); // Reinitialize the plots
 
+    //CONTROL MODE BUTTONS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     //Radio buttons for control mode
     $('#setpointControlButton').change(handleSetpointControlButton);
     $('#manualControlButton').change(handleManualControlButton);
     $('#arbitraryControlButton').change(handleArbitraryControlButton);
+    $('#controlSettings-submitButton').click(handleControlSubmitButton); //Submit the control settings
 
     $('#startRecordingButton').click(handleStartRecordingButton);       //Form submission for saving the file and recording data
     $('#abortRecordingButton').click(handleAbortRecordingButton);       //Abort the recording
 
     //Event listeners for the modal form submission
     $('#sensorForm').submit((e) => {
+        e.preventDefault(); // Prevent the default form submission
+    });
+    $('#controlForm').submit((e) => {
         e.preventDefault(); // Prevent the default form submission
     });
     $('#mfcForm').submit((e) => {
@@ -57,7 +63,6 @@ $(document).ready(function() {
 
 // Loop function to refresh the site
 setInterval(async () => {
-
     const frameData = await getData();
     updatePlots(frameData);
     updateDiagramText(frameData);
@@ -155,17 +160,20 @@ function processMainplot(frameData) {
 }
 
 function processSubplot1(frameData) {
+    console.log('Subplot1 Data:', frameData);
     data = {
-        MFC1_flowrate: frameData['MFC1']['flowrate'],
+        MFC1_flowrate: frameData['MFC1']['volumetric_flow'],
         MFC1_setpoint: frameData['MFC1']['setpoint'],
+        MFC1_pressure: frameData['MFC1']['pressure'],
     };
     return data;
 }
 
 function processSubplot2(frameData) {
     data = {
-        MFC2_flowrate: frameData['MFC2']['flowrate'],
+        MFC2_flowrate: frameData['MFC2']['volumetric_flow'],
         MFC2_setpoint: frameData['MFC2']['setpoint'],
+        MFC2_pressure: frameData['MFC2']['pressure'],
     };
     return data;
 }
@@ -252,27 +260,86 @@ function drawFlowDiagram() {
     });
 }
 
+////////////////////////////////////////
+// Event Handlers
+////////////////////////////////////////
 
+//Function to handle the control mode radio buttons
 function handleSetpointControlButton() {
     $('#manualControlParams').addClass('d-none');         // Hide the manual control parameters
     $('#arbitrary-settings').addClass('d-none');       // Hide the arbitrary setpoint settings
     $('#setpointControlParams').removeClass('d-none');    // Show the setpoint control parameters
-    $('#controlSettings-submitButton').removeClass('d-none'); // Show the submit button for the control settings
 }
-
 function handleManualControlButton() {
     $('#setpointControlParams').addClass('d-none');    // Hide the setpoint control parameters
     $('#arbitrary-settings').addClass('d-none');       // Hide the arbitrary setpoint settings
     $('#manualControlParams').removeClass('d-none');  // Show the manual control parameters
-    $('#controlSettings-submitButton').removeClass('d-none'); // Show the submit button for the control settings
 }
-
 function handleArbitraryControlButton() {
     $('#setpointControlParams').addClass('d-none');         // Hide the setpoint control parameters
     $('#manualControlParams').addClass('d-none');         // Hide the manual control parameters
-    $('#controlSettings-submitButton').addClass('d-none'); // Hide the submit button for the control settings
     $('#arbitrary-settings').removeClass('d-none');       // Show the arbitrary setpoint settings
 }
+
+function handleControlSubmitButton() {
+    console.log('Submit Control Settings');
+    
+    //Get the control mode
+    const CONTROL_MODE = $('input[name="controlState"]:checked').val();
+    let params = {};
+
+    //Get the control parameters based on the control mode
+    switch(CONTROL_MODE) {
+        case 'MAN':
+            params = {  'MFC1': $('#manualControl-MFC1').val(), 
+                        'MFC2': $('#manualControl-MFC2').val()
+                    };
+            break;
+        case 'SPT':
+            params = {  'flowRate': $('#setpointControl-flowRate').val(),
+                        'humidity': $('#setpointControl-humidity').val()
+                    };
+            break;
+        case 'ARB':
+            console.log('Arbitrary Control');
+            break;
+    }
+
+    // Send the control values to the server
+    console.log('Control Mode:', CONTROL_MODE);
+    console.log('Control Params:', params);
+    fetch('/set_control', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            'controlMode': CONTROL_MODE,
+            'params': params
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Set the control values in the HTML, depending on the control mode
+        switch(CONTROL_MODE) {
+            case 'MAN':
+                $('#manualControl-MFC1').val(data['control_params']['MFC1']);
+                $('#manualControl-MFC2').val(data['control_params']['MFC2']);
+                break;
+            case 'SPT':
+                $('#setpointControl-flowRate').val(data['control_params']['flowRate']);
+                $('#setpointControl-humidity').val(data['control_params']['humidity']);
+                break;
+            case 'ARB':
+                console.log('Arbitrary Control');
+                break;
+        }
+
+        console.log(data);
+    });
+}
+
+
 
 //Start Recording button handler
 function handleStartRecordingButton() {
