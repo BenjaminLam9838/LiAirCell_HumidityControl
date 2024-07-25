@@ -25,7 +25,7 @@ logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
 # GLOBAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-CONTROL_MODE = 'MANUAL'
+CONTROL_MODE = 'MAN'
 CONTROL_PARAMS = None
 CONTROL_LOOP_ON = False
 CONTROL_LOOP_SETPOINTS = None
@@ -38,7 +38,6 @@ HSI = HumiditySensorInterface()
 # MFC Devices
 MFC1_PORT = '/dev/tty.usbserial-AU057C72'
 MFC2_PORT = '/dev/tty.usbserial-AU05IFFF'
-MFC_COMMAND_QUEUE = asyncio.Queue()
 
 # Create instances of the hardware components (Data aquisition components)
 daq_instances = {
@@ -71,6 +70,12 @@ try:
     logging.info(f"Starting connection to MFC2 on port {MFC2_PORT}")
     asyncio.run(daq_instances['MFC2'].connect(MFC2_PORT))
     logging.info(f"Connected to MFC2 on port {MFC2_PORT}")
+
+    # If connected, set MFCs to 0 flow
+    CONTROL_MODE = 'MAN'
+    CONTROL_PARAMS = {'MFC1': 0, 'MFC2': 0}
+    hg.add_flask_command( daq_instances['MFC1'].set_flow_rate, {'flow_rate': 0} )
+    hg.add_flask_command( daq_instances['MFC2'].set_flow_rate, {'flow_rate': 0} )
 except:
     logging.error("Could not connect to MFCs, CHANGE PORT")
     if not TEST_MODE: sys.exit()
@@ -149,9 +154,9 @@ async def plot_flow_arbitrary():
     # if request.method == 'GET':
     #     jsonify({'time': time_s.tolist(), 'values': values.tolist()})
 
-@app.route('/get_current_control_method', methods=['GET'])
-def get_current_control_method():
-    return jsonify({'control_mode': CONTROL_MODE}, {'control_params': CONTROL_PARAMS}), 200
+@app.route('/get_current_control', methods=['GET'])
+def get_current_control():
+    return jsonify({'control_mode': CONTROL_MODE, 'control_params': CONTROL_PARAMS}), 200
 
 @app.route('/set_control', methods=['POST'])
 async def set_control():
@@ -180,8 +185,12 @@ async def set_control():
 
         logging.info(f"Setting MFCs to {CONTROL_PARAMS['MFC1']} and {CONTROL_PARAMS['MFC2']}")
 
-        # Set the MFCs flow rates by adding it to the MFC command queue
-        await MFC_COMMAND_QUEUE.put({'CONTROL_MODE': CONTROL_MODE, 'CONTROL_PARAMS': CONTROL_PARAMS})
+        # Set the MFCs flow rates by adding it to the command queue to be handled by the hardware loop
+        hg.add_flask_command( daq_instances['MFC1'].set_flow_rate, 
+                             {'flow_rate': CONTROL_PARAMS['MFC1']} )
+        hg.add_flask_command( daq_instances['MFC2'].set_flow_rate, 
+                             {'flow_rate': CONTROL_PARAMS['MFC2']} )
+
         message = "MFCs set to manual control"
 
     elif CONTROL_MODE == 'SPT':
@@ -196,8 +205,9 @@ async def set_control():
         CONTROL_PARAMS['flowRate'] = max(0, min(100, CONTROL_PARAMS['flowRate']))
         CONTROL_PARAMS['humidity'] = max(0, min(100, CONTROL_PARAMS['humidity']))   
 
-        # Set the setpoints for the control loop by adding it to the MFC command queue
-        await MFC_COMMAND_QUEUE.put({'CONTROL_MODE': CONTROL_MODE, 'CONTROL_PARAMS': CONTROL_PARAMS})
+        # TODO: Set the setpoints for the control loop
+
+
         message = "MFCs set to setpoint control"
 
     elif CONTROL_MODE == 'ARB':
@@ -208,10 +218,13 @@ async def set_control():
 
         #Also return the timeseries to the client for plotting
         time_s, values = parse_timeseries(CONTROL_PARAMS)
-        return jsonify({'success': True, 'message': message, 'control_params': CONTROL_PARAMS, 'time': time_s.tolist(), 'values': values.tolist()}), 200
+        return jsonify({'success': True, 'message': message, 
+                        'control_mode': CONTROL_MODE, 'control_params': CONTROL_PARAMS, 
+                        'time': time_s.tolist(), 'values': values.tolist()}), 200
 
 
-    return jsonify({'success': True, 'message': message, 'control_params': CONTROL_PARAMS}), 200
+    return jsonify({'success': True, 'message': message, 
+                    'control_mode': CONTROL_MODE, 'control_params': CONTROL_PARAMS}), 200
 
 @app.route('/')
 def index():
@@ -221,43 +234,27 @@ def index():
 ### Hardware run loop
 ######################
 
-# Function to handle commands from the MFC command queue
-async def handle_mfc_command(command):
-    if command['CONTROL_MODE'] == 'MAN':
-        # Set the MFCs to the desired flow rates
-        await daq_instances['MFC1'].set_flow_rate(command['CONTROL_PARAMS']['MFC1'])
-        await daq_instances['MFC2'].set_flow_rate(command['CONTROL_PARAMS']['MFC2'])
-        logging.info(f"Set MFCs to {command['CONTROL_PARAMS']['MFC1']} and {command['CONTROL_PARAMS']['MFC2']}")
-    elif command['CONTROL_MODE'] == 'SPT':
-        # Set the MFCs to the desired setpoints
-        pass
-    elif command['CONTROL_MODE'] == 'ARB':
-        # Set the MFCs to the desired flow rates
-        pass
-
 async def run_loop():
     # Setup
 
     # Looping
     while True:
-        # Queery data from all components (DAQs), 
-        # save the recent data to a running windowed list of the last 50 elements
+        # Check for commands from the Flask app and handle them
+        if not hg.flask_command_queue.empty():
+            await hg.run_flask_commands()
+        
+        # Query data from all components (DAQs), and save 
+        # the recent data to a running windowed list of the last 50 elements
         await hg.fetch_data()
 
-        #Check the MFC command queue
-        if not MFC_COMMAND_QUEUE.empty():
-            command = await MFC_COMMAND_QUEUE.get()
-            await handle_mfc_command(command)
-            
-        
         if CONTROL_LOOP_ON:
             # Calculate the control loop, get desired setpoints
             # Set the MFCs
             pass
         
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(0.5)
 
-
+# Start the Flask app and hardware loop
 if __name__ == '__main__':
     # Log whenever the main method is run
     logging.debug("Main method is being run.")

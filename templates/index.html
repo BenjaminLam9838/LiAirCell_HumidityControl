@@ -72,7 +72,6 @@
                     </div>
                     <div class="card-body">
                         <!-- Control Scheme settings -->
-                        <div> <h4>Control Scheme</h4> </div>
                         <div class="row pb-3">
                             <!-- State Selection on the left -->
                             <div class="col-md-2">
@@ -89,10 +88,6 @@
                                     <label class="form-check-label" for="arbitraryControlButton">Arbitrary Control</label>
                                 </div>
 
-                                <!-- Submit Button -->
-                                <div class="pt-3">
-                                    <button type="submit" class="btn btn-primary" id="controlSettings-submitButton">Set</button>
-                                </div>
                             </div>
                     
                             <!-- Parameters and Submit Button on the right -->
@@ -120,24 +115,24 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <!-- Parameters for Setpoint Control -->
-                                        <div id="setpointControlParams" class="state-params d-none">
-                                            <p>Define the flow rate [0-100 sccm] and humidity [0-100%] constant setpoints </p>
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="input-group">
-                                                        <span class="input-group-text"> <b>Flow Rate</b> </span>
-                                                        <input type="number" class="form-control col-md-11" id="setpointControl-flowRate" name="setpointControl-flowRate">
-                                                        <span class="input-group-text">[sccm]</span>
+                                            <!-- Parameters for Setpoint Control -->
+                                            <div id="setpointControlParams" class="state-params d-none">
+                                                <p>Define the flow rate [0-100 sccm] and humidity [0-100%] constant setpoints </p>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="input-group">
+                                                            <span class="input-group-text"> <b>Flow Rate</b> </span>
+                                                            <input type="number" class="form-control col-md-11" id="setpointControl-flowRate" name="setpointControl-flowRate">
+                                                            <span class="input-group-text">[sccm]</span>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="input-group">
-                                                        <span class="input-group-text"> <b>Humidity</b> </span>
-                                                        <input type="number" class="form-control col-md-11" id="setpointControl-humidity" name="setpointControl-humidity">
-                                                        <span class="input-group-text">[%]</span>
+                                                    <div class="col-md-6">
+                                                        <div class="input-group">
+                                                            <span class="input-group-text"> <b>Humidity</b> </span>
+                                                            <input type="number" class="form-control col-md-11" id="setpointControl-humidity" name="setpointControl-humidity">
+                                                            <span class="input-group-text">[%]</span>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -149,6 +144,10 @@
                                         <div class="container">
                                             {% include 'arbitrarySetpoint.html' %}
                                         </div>
+                                    </div>
+                                    <!-- Submit Button -->
+                                    <div class="pt-2">
+                                        <button type="submit" class="btn btn-primary" id="controlSettings-submitButton">Set</button>
                                     </div>
                                 </form>
                             </div>

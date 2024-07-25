@@ -1,7 +1,7 @@
 //Define State variables
 let isRecording = false;
 const DEFAULT_SAVE_DIRECTORY = '/Users/benjamin/Downloads'
-const CONTROL_MODE = 'MAN'
+let CONTROL_MODE = 'MAN'
 
 // Define the components of the system
 const components = {
@@ -16,9 +16,9 @@ const components = {
 
 // Initialize the plots
 const plots = {
-    'main_plot': new ScrollingPlot('Main plot', 'flowPlot_main', 20),
-    'subplot1': new ScrollingPlot('Subplot 1', 'flowPlot_sub1', 20),
-    'subplot2': new ScrollingPlot('Subplot 2', 'flowPlot_sub2', 20)
+    'main_plot': new ScrollingPlot('Humidity', 'flowPlot_main', 20),
+    'subplot1': new ScrollingPlot('MFC 1 Params', 'flowPlot_sub1', 20),
+    'subplot2': new ScrollingPlot('MFC 2 Params', 'flowPlot_sub2', 20)
 };
 
 
@@ -87,6 +87,7 @@ async function setupSite() {
     // Update the recording status
     //TODO: Check if the system is recording data
     updateRecordingStatusHTML();
+    updateControlMode();
 }
 
 async function initPlots() {
@@ -117,6 +118,16 @@ function updateConnectionStatus() {
     for (let key in components) {
         components[key].checkConnection();
     }
+}
+
+function updateControlMode() {
+    // Get the control mode from the server
+    fetch('/get_current_control')
+    .then(response => response.json())
+    .then(data => {
+        // Update the control mode alert
+        updateControlModeAlert(data);
+    });
 }
 
 // Update the text of the diagram
@@ -285,7 +296,7 @@ function handleControlSubmitButton() {
     console.log('Submit Control Settings');
     
     //Get the control mode
-    const CONTROL_MODE = $('input[name="controlState"]:checked').val();
+    CONTROL_MODE = $('input[name="controlState"]:checked').val();
     let params = {};
 
     //Get the control parameters based on the control mode
@@ -322,39 +333,41 @@ function handleControlSubmitButton() {
     .then(data => {
         // Server handles control setting ranges, reset the control values to the server values
         // Also update the alert to show the current control mode
-        switch(CONTROL_MODE) {
-            case 'MAN':
-                $('#manualControl-MFC1').val(data['control_params']['MFC1']);
-                $('#manualControl-MFC2').val(data['control_params']['MFC2']);
-
-                $('#controlModeAlert').removeClass('alert-light').addClass('alert-success');
-                $('#controlModeAlert-text').html(
-                    `<b>Manual Control</b>: MFC1 = ${data['control_params']['MFC1']} sccm, MFC2 = ${data['control_params']['MFC2']} sccm`);
-                break;
-            case 'SPT':
-                $('#setpointControl-flowRate').val(data['control_params']['flowRate']);
-                $('#setpointControl-humidity').val(data['control_params']['humidity']);
-                
-                $('#controlModeAlert').removeClass('alert-light').addClass('alert-success');
-                $('#controlModeAlert-text').html(
-                    `<b>Setpoint Control</b>: Flow rate = ${data['control_params']['flowRate']} sccm, Humidity = ${data['control_params']['humidity']} RH%`);
-                break;
-            case 'ARB':
-                console.log('Arbitrary Control');
-
-                $('#controlModeAlert').removeClass('alert-light').addClass('alert-success');
-                $('#controlModeAlert-text').html(
-                    `<b>Arbitrary Control</b> mode set. The profile is executed when the data recording is started.`);
-            
-                break;
-        }
-
-        
-
-        console.log(data);
+        updateControlModeAlert(data);
     });
 }
 
+
+function updateControlModeAlert(data) {
+    CONTROL_MODE = data['control_mode'];
+    switch(CONTROL_MODE) {
+        case 'MAN':
+            console.log(CONTROL_MODE);
+            $('#manualControl-MFC1').val(data['control_params']['MFC1']);
+            $('#manualControl-MFC2').val(data['control_params']['MFC2']);
+
+            $('#controlModeAlert').removeClass('alert-light').addClass('alert-success');
+            $('#controlModeAlert-text').html(
+                `<b>Manual Control</b>: MFC1 = ${data['control_params']['MFC1']} sccm, MFC2 = ${data['control_params']['MFC2']} sccm`);
+            break;
+        case 'SPT':
+            $('#setpointControl-flowRate').val(data['control_params']['flowRate']);
+            $('#setpointControl-humidity').val(data['control_params']['humidity']);
+            
+            $('#controlModeAlert').removeClass('alert-light').addClass('alert-success');
+            $('#controlModeAlert-text').html(
+                `<b>Setpoint Control</b>: Flow rate = ${data['control_params']['flowRate']} sccm, Humidity = ${data['control_params']['humidity']} RH%`);
+            break;
+        case 'ARB':
+            console.log('Arbitrary Control');
+
+            $('#controlModeAlert').removeClass('alert-light').addClass('alert-success');
+            $('#controlModeAlert-text').html(
+                `<b>Arbitrary Control</b> mode set. The profile is executed when the data recording is started.`);
+        
+            break;
+    }
+}
 
 
 //Start Recording button handler

@@ -174,6 +174,7 @@ class MFC (DAQ):
         if not self.is_connected:
             return False
         await self.fc.set_flow_rate(flow_rate)
+        logging.info(f"Set MFC flow rate to {flow_rate}, port {self.port}")
         return True
 
 class HumiditySensor(DAQ):
@@ -289,16 +290,47 @@ class HardwareGroup:
         self.daq_lists = {}
         self.max_list_length = max_list_length
 
+        self.flask_command_queue = asyncio.Queue()
+
         # Initialize a list to store data for each instance
         for daq in self.daq_instances.keys():
             self.daq_lists[daq] = []
 
+    def add_flask_command(self, func, params):
+        self.flask_command_queue.put_nowait( (func, params) )
+
+    # Worker function to run commands in the queue
+    async def _worker(self, func, kwargs):
+        if asyncio.iscoroutinefunction(func):
+            await func(**kwargs)
+        else:
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, func, kwargs)
+
+    async def run_flask_commands(self):
+        # Run all commands in the queue in parallel by assigning workers
+        tasks = []
+        for _ in range(self.flask_command_queue.qsize()):
+            func, params = await self.flask_command_queue.get()
+            tasks.append( self._worker(func, params) )
+            logging.info(f"Working: {func.__name__} with params {params}")
+            self.flask_command_queue.task_done()
+        # Await all tasks to complete
+        await asyncio.gather(*tasks)
+
     async def fetch_data(self):
+        """
+        Fetches data from all DAQ instances and pushes it to a list.
+
+        Returns:
+            None
+        """
         for daq_key in self.daq_instances.keys():
             current_data = await self.daq_instances[daq_key].fetch_data()
             if current_data is not False:
                 self._push_to_list(daq_key, current_data)
-    
+
+
     #Manage the list so that it stays at the max list length
     def _push_to_list(self, daq_key, data):
         self.daq_lists[daq_key].append(data)
