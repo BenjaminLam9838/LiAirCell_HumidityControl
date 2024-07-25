@@ -156,7 +156,7 @@ def get_current_control_method():
 @app.route('/set_control', methods=['POST'])
 async def set_control():
     requestData = request.get_json()
-    print(requestData)
+
     # Set the control scheme
     CONTROL_MODE = requestData['controlMode']
     # Record the parameters
@@ -164,12 +164,12 @@ async def set_control():
     logging.info(f"Control mode: {CONTROL_MODE} \n{'':20}Control params: {CONTROL_PARAMS}")
 
     message = ""
-    # Set the MFCs to the desired flow rates, depending on the control scheme
+    # Set the MFCs control behavior, depending on the control scheme
     if CONTROL_MODE == 'MAN':
         CONTROL_LOOP_ON = False
         # Check if each of the control parameters are not blank
         if CONTROL_PARAMS['MFC1'] == '' or CONTROL_PARAMS['MFC2'] == '':
-            return jsonify({'success': False, 'message': 'MFC flow rates not provided'}), 400
+            return jsonify({'success': False, 'message': 'MFC flow rate(s) blank'}), 400
 
         # Parse the control parameters as floats
         CONTROL_PARAMS = {key: float(val) for key, val in CONTROL_PARAMS.items()}
@@ -182,10 +182,24 @@ async def set_control():
 
         # Set the MFCs flow rates by adding it to the MFC command queue
         await MFC_COMMAND_QUEUE.put({'CONTROL_MODE': CONTROL_MODE, 'CONTROL_PARAMS': CONTROL_PARAMS})
+        message = "MFCs set to manual control"
 
     elif CONTROL_MODE == 'SPT':
         CONTROL_LOOP_ON = True
+        # Check if each of the control parameters are not blank
+        if CONTROL_PARAMS['flowRate'] == '' or CONTROL_PARAMS['humidity'] == '':
+            return jsonify({'success': False, 'message': 'Setpoint(s) blank'}), 400
+        
+        # Parse the control parameters as floats
+        CONTROL_PARAMS = {key: float(val) for key, val in CONTROL_PARAMS.items()}
+        # Ensure the flow rates are within the limits.  If not, set them to the limits
+        CONTROL_PARAMS['flowRate'] = max(0, min(100, CONTROL_PARAMS['flowRate']))
+        CONTROL_PARAMS['humidity'] = max(0, min(100, CONTROL_PARAMS['humidity']))   
+
+        # Set the setpoints for the control loop by adding it to the MFC command queue
+        await MFC_COMMAND_QUEUE.put({'CONTROL_MODE': CONTROL_MODE, 'CONTROL_PARAMS': CONTROL_PARAMS})
         message = "MFCs set to setpoint control"
+
     elif CONTROL_MODE == 'ARB':
         CONTROL_LOOP_ON = True
         CONTROL_PARAMS = [sect for sect in CONTROL_PARAMS if sect['segmentString'] != '' or sect['duration'] != ''] #Remove the empty sections
@@ -194,7 +208,7 @@ async def set_control():
 
         #Also return the timeseries to the client for plotting
         time_s, values = parse_timeseries(CONTROL_PARAMS)
-        return jsonify({'success': True, 'message': message, 'time': time_s.tolist(), 'values': values.tolist()}), 200
+        return jsonify({'success': True, 'message': message, 'control_params': CONTROL_PARAMS, 'time': time_s.tolist(), 'values': values.tolist()}), 200
 
 
     return jsonify({'success': True, 'message': message, 'control_params': CONTROL_PARAMS}), 200

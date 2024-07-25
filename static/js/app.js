@@ -320,20 +320,36 @@ function handleControlSubmitButton() {
     })
     .then(response => response.json())
     .then(data => {
-        // Set the control values in the HTML, depending on the control mode
+        // Server handles control setting ranges, reset the control values to the server values
+        // Also update the alert to show the current control mode
         switch(CONTROL_MODE) {
             case 'MAN':
                 $('#manualControl-MFC1').val(data['control_params']['MFC1']);
                 $('#manualControl-MFC2').val(data['control_params']['MFC2']);
+
+                $('#controlModeAlert').removeClass('alert-light').addClass('alert-success');
+                $('#controlModeAlert-text').html(
+                    `<b>Manual Control</b>: MFC1 = ${data['control_params']['MFC1']} sccm, MFC2 = ${data['control_params']['MFC2']} sccm`);
                 break;
             case 'SPT':
                 $('#setpointControl-flowRate').val(data['control_params']['flowRate']);
                 $('#setpointControl-humidity').val(data['control_params']['humidity']);
+                
+                $('#controlModeAlert').removeClass('alert-light').addClass('alert-success');
+                $('#controlModeAlert-text').html(
+                    `<b>Setpoint Control</b>: Flow rate = ${data['control_params']['flowRate']} sccm, Humidity = ${data['control_params']['humidity']} RH%`);
                 break;
             case 'ARB':
                 console.log('Arbitrary Control');
+
+                $('#controlModeAlert').removeClass('alert-light').addClass('alert-success');
+                $('#controlModeAlert-text').html(
+                    `<b>Arbitrary Control</b> mode set. The profile is executed when the data recording is started.`);
+            
                 break;
         }
+
+        
 
         console.log(data);
     });
