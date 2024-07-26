@@ -30,9 +30,10 @@ CONTROL_PARAMS = None
 CONTROL_LOOP_ON = False
 CONTROL_LOOP_SETPOINTS = None
 CONTROL_LOOP_STARTTIME = None
+DEFAULT_SAVE_DIR = os.getcwd() + '/data'
 
 # Humidity Sensor Interface, handles Arduino communication
-ARDUINO_PORT = '/dev/cu.usbmodem144301'
+ARDUINO_PORT = '/dev/cu.usbmodem143301'
 HSI = HumiditySensorInterface()
 
 # MFC Devices
@@ -113,12 +114,16 @@ async def connect(daq_id):
                 return jsonify({'success': False, 'message': 'Port not provided', 'port': ''}), 400
             
             # Attempt to connect to the daqonent with the provided port
-            success, message = await daq.connect(port)
+            # success, message = await daq.connect(port)
             
-            if success:
-                return jsonify({'success': True, 'message': message, 'port': daq.port}), 200
-            else:
-                return jsonify({'success': False, 'message': message, 'port': daq.port}), 200
+            # Add the connection command to the command queue
+            hg.add_flask_command(daq.connect, {'port': port})
+            
+            return jsonify({'success': True, 'message': 'Connection command sent', 'port': port}), 200
+            # if success:
+            #     return jsonify({'success': True, 'message': message, 'port': daq.port}), 200
+            # else:
+            #     return jsonify({'success': False, 'message': message, 'port': daq.port}), 200
         
         except Exception as e:
             logging.error(f"Error connecting to {type(daq)} on port {daq.port}\n{'':20}{e}")
@@ -132,6 +137,39 @@ async def connect(daq_id):
             return jsonify({'success': True, 'message': f'Connected using port {daq.port}', 'port': daq.port}), 200
         else:
             return jsonify({'success': False, 'message': f'No Connection on port {daq.port}', 'port': daq.port}), 200
+
+# Route to start data acquisition
+@app.route('/start_recording_data', methods=['POST'])
+def start_recording_data():
+    current_timestamp = time.strftime("%y%m%d_%H%M")
+
+    #Get the set directory to save the data to
+    requestData = request.get_json()
+    directory = requestData['directory']
+    if directory == '':
+        directory = f"/LAC_{current_timestamp}"
+
+    # Set the directory to save the data to
+    directory = f"{DEFAULT_SAVE_DIR}{directory}"
+
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+    for daq in daq_instances.keys():
+        filepath = f"{directory}/{daq}_{current_timestamp}.txt"
+        daq_instances[daq].set_save_file( filepath )
+
+    return jsonify({'success': True, 'message': 'Data recording started'}), 200
+
+# Route to stop data acquisition
+@app.route('/stop_recording_data', methods=['POST'])
+def stop_recording_data():
+    for daq in daq_instances.keys():
+        daq_instances[daq].close_save_file()
+
+    return jsonify({'success': True, 'message': 'Data recording stopped'}), 200
+
+
 
 @app.route('/plot_flow_arbitrary', methods=['POST', 'GET'])
 async def plot_flow_arbitrary():

@@ -84,11 +84,18 @@ class DAQ:
     
     # Function to set the save file location
     def set_save_file(self, file_path):
+        if not self.is_connected:
+            return
         self.save_file = open(file_path, 'w')
+        logging.info(f"Opened save file at {file_path}")
 
     # Function to close the save file
     def close_save_file(self):
+        if self.save_file is None:
+            return
+        
         self.save_file.close()
+        logging.info(f"Closed save file at {self.save_file.name}")
         self.save_file = None
         
     # Function to get all the data from the data queue

@@ -56,6 +56,9 @@ $(document).ready(function() {
     $('#mfcForm').submit((e) => {
         e.preventDefault(); // Prevent the default form submission
     });
+    $('#saveFileForm').submit((e) => {
+        e.preventDefault(); // Prevent the default form submission
+    });
 
 
     console.log('Document Ready');
@@ -373,27 +376,42 @@ function updateControlModeAlert(data) {
 //Start Recording button handler
 function handleStartRecordingButton() {
     console.log('Start Recording');
-    // Handle the form submission
-    $('#saveFileForm').submit(() => {
-        e.preventDefault(); // Prevent the default form submission
-        console.log('Save File form submitted');
-    });
 
-    const serverSuccess = true; // Assume the server responds with success
-    //Change the alert class to success, if the server responds with a success message
-    if (serverSuccess) {
-        console.log('Data Save Directory:', $('#dataRecordingFile').val());
-        isRecording = true;
-        updateRecordingStatusHTML();
-    }
+    //Get the file path to save the data, then send the data to the server
+    const saveDirectory = $('#dataRecordingFile').val();
+    fetch('/start_recording_data', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            'directory': saveDirectory
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+    });
+    
+    IS_RECORDING = true;
+    updateRecordingStatusHTML();
 }
 
 //Abort Recording button handler
 function handleAbortRecordingButton() {
     console.log('Abort Recording');
-    isRecording = false;
+    fetch('/stop_recording_data', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+    });
+
+    IS_RECORDING = false;
     updateRecordingStatusHTML();
 }
+
 
 //Function to handle the recording status HTML
 // Disables the Start Recording button and enables the Abort Recording button when recording
