@@ -70,7 +70,7 @@ setInterval(async () => {
     updatePlots(frameData);
     updateDiagramText(frameData);
     updateConnectionStatus();
-}, 1000); 
+}, 1500); 
 
 
 // --------------------------------

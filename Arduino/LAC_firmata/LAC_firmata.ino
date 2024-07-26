@@ -6,7 +6,7 @@ void setup() {
   Firmata.begin(57600);
 
   // Attach SysEx callback handler
-  for (uint8_t i = 0; i < 0x30; i++)
+  for (uint8_t i = 0; i < 0x50; i++)
     Firmata.attach(i, sysexCallback);
 
   Wire.begin();

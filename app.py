@@ -62,6 +62,9 @@ except:
     logging.error("Could not connect to ARDUINO, CHANGE PORT")
     if not TEST_MODE: sys.exit()  # Exit the program if the Arduino connection fails
 
+asyncio.run(daq_instances['SHT1'].connect(0x31))
+asyncio.run(daq_instances['SHT2'].connect(0x32))
+
 # Try a connection to the MFCs
 logging.info(f"Starting connection to MFC1 on port {MFC1_PORT}")
 asyncio.run(daq_instances['MFC1'].connect(MFC1_PORT))
