@@ -1,6 +1,6 @@
 //Define State variables
-let isRecording = false;
-const DEFAULT_SAVE_DIRECTORY = '/Users/benjamin/Downloads'
+let IS_RECORDING = false;
+const DEFAULT_SAVE_DIRECTORY = ''
 let CONTROL_MODE = 'MAN'
 
 // Define the components of the system
@@ -418,7 +418,7 @@ function handleAbortRecordingButton() {
 // or vice versa
 // Also changes the alert text and class to indicate the recording status
 function updateRecordingStatusHTML() {
-    if (isRecording) {
+    if (IS_RECORDING) {
         $('#recordingStatusAlert').removeClass('alert-secondary').addClass('alert-success');       // Change the alert class to success
         $('#recordingStatusAlert-text').text('Data Recording');                                  // Change the alert text
         $('#startRecordingButton').prop('disabled', true);                                      // Disable the start recording button
