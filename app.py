@@ -13,7 +13,7 @@ import uuid
 import os
 import sys
 
-TEST_MODE = True   # Set to True to run in test mode, averts required hardware connections
+TEST_MODE = False   # Set to True to run in test mode, averts required hardware connections
 
 print('\n\n\n')
 # Set up logging
@@ -32,7 +32,7 @@ CONTROL_LOOP_SETPOINTS = None
 CONTROL_LOOP_STARTTIME = None
 
 # Humidity Sensor Interface, handles Arduino communication
-ARDUINO_PORT = '/dev/tty.usbmodem21101'
+ARDUINO_PORT = '/dev/cu.usbmodem144301'
 HSI = HumiditySensorInterface()
 
 # MFC Devices

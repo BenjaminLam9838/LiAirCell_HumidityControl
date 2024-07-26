@@ -16,9 +16,9 @@ const components = {
 
 // Initialize the plots
 const plots = {
-    'main_plot': new ScrollingPlot('Humidity', 'flowPlot_main', 20),
-    'subplot1': new ScrollingPlot('MFC 1 Params', 'flowPlot_sub1', 20),
-    'subplot2': new ScrollingPlot('MFC 2 Params', 'flowPlot_sub2', 20)
+    'main_plot': new ScrollingPlot('Humidity', 'flowPlot_main', 100),
+    'subplot1': new ScrollingPlot('MFC 1 Params', 'flowPlot_sub1', 100),
+    'subplot2': new ScrollingPlot('MFC 2 Params', 'flowPlot_sub2', 100)
 };
 
 
