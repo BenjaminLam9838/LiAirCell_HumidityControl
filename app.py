@@ -116,7 +116,7 @@ async def connect(daq_id):
                 return jsonify({'success': False, 'message': 'Port not provided', 'port': ''}), 400
             
             # Add the connection command to the command queue
-            hg.add_flask_command(daq.connect, {'port': port})
+            await daq.connect(port)
             
             return jsonify({'success': True, 'message': 'Connection command sent', 'port': port}), 200        
         except Exception as e:
