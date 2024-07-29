@@ -76,10 +76,10 @@ class DAQ:
         if self.save_file is not None:
             # Check if the file is empty, if so, write the header
             if self.save_file.tell() == 0:
-                header_line = 'timestamp\tdatetime\t' + '\t'.join(data['values'].keys())
+                header_line = 'datetime,' + ','.join(data['values'].keys())
                 self.save_file.write(header_line + '\n')
             # Write the data to the file
-            data_line = f"{data['timestamp']}\t{data['datetime']}\t" + '\t'.join([str(v) for v in data['values'].values()])
+            data_line = f"{data['datetime']}," + ','.join([str(v) for v in data['values'].values()])
             self.save_file.write(data_line + '\n')
     
     # Function to set the save file location

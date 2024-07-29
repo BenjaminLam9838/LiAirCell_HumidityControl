@@ -150,7 +150,7 @@ def start_recording_data():
         os.makedirs(directory)
 
     for daq_key in daq_instances.keys():
-        filepath = f"{directory}/{daq_key}_{current_timestamp}.txt"
+        filepath = f"{directory}/{daq_key}_{current_timestamp}.csv"
         daq_instances[daq_key].set_save_file( filepath )
 
     return jsonify({'success': True, 'message': 'Data recording started'}), 200
