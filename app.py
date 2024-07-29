@@ -13,13 +13,17 @@ import uuid
 import os
 import sys
 
-TEST_MODE = False   # Set to True to run in test mode, averts required hardware connections
+TEST_MODE = True   # Set to True to run in test mode, averts required hardware connections
 
 print('\n\n\n')
 # Set up logging
 logging.basicConfig(level=logging.INFO, 
                     format='%(asctime)-9s%(levelname)-8s | %(message)s',
-                    datefmt='%H:%M:%S')
+                    datefmt='%H:%M:%S',
+                    handlers=[
+                        logging.FileHandler("app.log"),  # Log to a file
+                        logging.StreamHandler()          # Also log to console
+                    ])
 # Change Flask's logging to only show warnings and above
 logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
@@ -93,11 +97,6 @@ app.config['SERVER_NAME'] = 'localhost:4000'  # Replace with your server name an
 def fetch_data(daq_id):
     daq = daq_instances.get(daq_id)
     data = daq.pop_data_queue()
-    # logging.debug(f"Data served [{daq_id:10}] = {len(data):3} points")
-
-    # if daq_id == 'SHT1':
-    #     logging.info(f"Data served [{daq_id:10}] = {data}")
-
     return jsonify(data)
 
 # Route to connect to a component using a specific port
@@ -116,18 +115,10 @@ async def connect(daq_id):
             if not port:
                 return jsonify({'success': False, 'message': 'Port not provided', 'port': ''}), 400
             
-            # Attempt to connect to the daqonent with the provided port
-            # success, message = await daq.connect(port)
-            
             # Add the connection command to the command queue
             hg.add_flask_command(daq.connect, {'port': port})
             
-            return jsonify({'success': True, 'message': 'Connection command sent', 'port': port}), 200
-            # if success:
-            #     return jsonify({'success': True, 'message': message, 'port': daq.port}), 200
-            # else:
-            #     return jsonify({'success': False, 'message': message, 'port': daq.port}), 200
-        
+            return jsonify({'success': True, 'message': 'Connection command sent', 'port': port}), 200        
         except Exception as e:
             logging.error(f"Error connecting to {type(daq)} on port {daq.port}\n{'':20}{e}")
             return jsonify({'success': False, 'message': str(e)}), 500
@@ -158,9 +149,9 @@ def start_recording_data():
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-    for daq in daq_instances.keys():
-        filepath = f"{directory}/{daq}_{current_timestamp}.txt"
-        daq_instances[daq].set_save_file( filepath )
+    for daq_key in daq_instances.keys():
+        filepath = f"{directory}/{daq_key}_{current_timestamp}.txt"
+        daq_instances[daq_key].set_save_file( filepath )
 
     return jsonify({'success': True, 'message': 'Data recording started'}), 200
 
@@ -171,8 +162,6 @@ def stop_recording_data():
         daq_instances[daq].close_save_file()
 
     return jsonify({'success': True, 'message': 'Data recording stopped'}), 200
-
-
 
 @app.route('/plot_flow_arbitrary', methods=['POST', 'GET'])
 async def plot_flow_arbitrary():
@@ -185,7 +174,7 @@ async def plot_flow_arbitrary():
 
         time_s, values = parse_timeseries(expr_pairs)
         print(time_s, values)
-        # Set the setpoint flow rates for the MFCs
+        #TODO: Set the setpoint flow rates for the MFCs
 
 
         # Return the timeseries to the client for plotting

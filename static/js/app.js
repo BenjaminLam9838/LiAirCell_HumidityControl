@@ -174,7 +174,6 @@ function processMainplot(frameData) {
 }
 
 function processSubplot1(frameData) {
-    console.log('Subplot1 Data:', frameData);
     data = {
         MFC1_flowrate: frameData['MFC1']['volumetric_flow'],
         MFC1_setpoint: frameData['MFC1']['setpoint'],
