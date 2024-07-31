@@ -44,7 +44,7 @@ $(document).ready(function() {
     $('#controlSettings-submitButton').click(handleControlSubmitButton); //Submit the control settings
 
     $('#startRecordingButton').click(handleStartRecordingButton);       //Form submission for saving the file and recording data
-    $('#abortRecordingButton').click(handleAbortRecordingButton);       //Abort the recording
+    $('#stopRecordingButton').click(handleStopRecordingButton);       //Stop the recording
 
     //Event listeners for the modal form submission
     $('#sensorForm').submit((e) => {
@@ -396,9 +396,9 @@ function handleStartRecordingButton() {
     updateRecordingStatusHTML();
 }
 
-//Abort Recording button handler
-function handleAbortRecordingButton() {
-    console.log('Abort Recording');
+//Stop Recording button handler
+function handleStopRecordingButton() {
+    console.log('Stop Recording');
     fetch('/stop_recording_data', {
         method: 'POST'
     })
@@ -413,7 +413,7 @@ function handleAbortRecordingButton() {
 
 
 //Function to handle the recording status HTML
-// Disables the Start Recording button and enables the Abort Recording button when recording
+// Disables the Start Recording button and enables the Stop Recording button when recording
 // or vice versa
 // Also changes the alert text and class to indicate the recording status
 function updateRecordingStatusHTML() {
@@ -421,11 +421,11 @@ function updateRecordingStatusHTML() {
         $('#recordingStatusAlert').removeClass('alert-secondary').addClass('alert-success');       // Change the alert class to success
         $('#recordingStatusAlert-text').text('Data Recording');                                  // Change the alert text
         $('#startRecordingButton').prop('disabled', true);                                      // Disable the start recording button
-        $('#abortRecordingButton').prop('disabled', false);                                       // Enable the abort recording button
+        $('#stopRecordingButton').prop('disabled', false);                                       // Enable the stop recording button
     } else {
         $('#recordingStatusAlert').removeClass('alert-success').addClass('alert-secondary');    // Change the alert class to light
         $('#recordingStatusAlert-text').text('Data Not Recording');                                  // Change the alert text
         $('#startRecordingButton').prop('disabled', false);                                                      // Enable the start recording button
-        $('#abortRecordingButton').prop('disabled', true);                                                     // Disable the abort recording button
+        $('#stopRecordingButton').prop('disabled', true);                                                     // Disable the stop recording button
     }
 }
