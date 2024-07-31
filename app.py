@@ -6,7 +6,6 @@ import Hardware
 import asyncio
 import datetime
 import math
-import random
 import time
 import threading
 import uuid
@@ -66,6 +65,7 @@ except:
     logging.error("Could not connect to ARDUINO, CHANGE PORT")
     if not TEST_MODE: sys.exit()  # Exit the program if the Arduino connection fails
 
+# Connect to the humidity sensors
 asyncio.run(daq_instances['SHT1'].connect(0x31))
 asyncio.run(daq_instances['SHT2'].connect(0x32))
 
@@ -91,7 +91,7 @@ app = Flask(__name__, static_url_path='/static')
 app.config['SERVER_NAME'] = 'localhost:4000'  # Replace with your server name and port
 
 ######################
-### ROUTES
+### FLASK ROUTES
 ######################
 @app.route('/<daq_id>/fetch_data', methods=['GET'])
 def fetch_data(daq_id):
@@ -243,6 +243,8 @@ async def set_control():
         CONTROL_PARAMS = [sect for sect in CONTROL_PARAMS if sect['segmentString'] != '' or sect['duration'] != ''] #Remove the empty sections
         CONTROL_PARAMS = [ (sect['segmentString'], float(sect['duration'])) for sect in CONTROL_PARAMS ]     # Set the expression-duration pairs as the control parameters
         message = "MFCs set to arbitrary control"
+
+        #TODO: Set the setpoint flow rates for the MFCs
 
         #Also return the timeseries to the client for plotting
         time_s, values = parse_timeseries(CONTROL_PARAMS)
