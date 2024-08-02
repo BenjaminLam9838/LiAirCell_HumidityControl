@@ -10,9 +10,9 @@ class ScrollingPlot {
         this.MAX_TIME_WINDOW_ms = MAX_TIME_WINDOW_s*1000;
 
         this.layout = {
-            title: this.plotTitle,
+            title: { text: this.plotTitle, x: 0, font: { family: 'Arial, sans-serif', weight: 'bold' } },
             xaxis: { title: 'X Axis' },
-            yaxis: { title: 'Y Axis' },
+            yaxis: { title: 'Y Axis', range: [0, 100] },
             showlegend: true,
             margin: {
                 l: 50,  // left margin in pixels
@@ -123,7 +123,6 @@ class ScrollingPlot {
         // Perform a single relayout to update the x-axis range
         Plotly.relayout(this.htmlElementId, {
             'xaxis.range': [globalMaxX-this.MAX_TIME_WINDOW_ms, globalMaxX],
-            'yaxis.autorange': true
         });
     }
 }

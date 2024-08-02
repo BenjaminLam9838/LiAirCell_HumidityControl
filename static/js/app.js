@@ -175,7 +175,7 @@ function processMainplot(frameData) {
 
 function processSubplot1(frameData) {
     data = {
-        MFC1_flowrate: frameData['MFC1']['volumetric_flow'],
+        MFC1_flowrate: frameData['MFC1']['mass_flow'],
         MFC1_setpoint: frameData['MFC1']['setpoint'],
         MFC1_pressure: frameData['MFC1']['pressure'],
     };
@@ -184,7 +184,7 @@ function processSubplot1(frameData) {
 
 function processSubplot2(frameData) {
     data = {
-        MFC2_flowrate: frameData['MFC2']['volumetric_flow'],
+        MFC2_flowrate: frameData['MFC2']['mass_flow'],
         MFC2_setpoint: frameData['MFC2']['setpoint'],
         MFC2_pressure: frameData['MFC2']['pressure'],
     };
