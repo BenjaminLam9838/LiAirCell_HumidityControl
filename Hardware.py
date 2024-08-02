@@ -45,17 +45,7 @@ class DAQ:
         Returns:
             data is fetched successfully, False otherwise.
         """
-        await asyncio.sleep(random.uniform(0.01, 0.02))
-
-        timestamp = time.time() - DAQ.start_time
-        dt = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
-        data = {'timestamp': timestamp, 'datetime': dt, 
-            'values': {'y1': math.sin(timestamp), 'y2': math.cos(timestamp)}}
-        
-        # Put the data into the data queue for a sliding window
-        self._track_data(data)
-
-        return data
+        pass
         
     def _track_data(self, data):
         """
@@ -64,7 +54,6 @@ class DAQ:
 
         Args:
             data (dict): A dictionary containing the data to be tracked. It should have the following keys:
-                - timestamp: The timestamp of the data.
                 - datetime: The datetime of the data.
                 - values: A dictionary containing the values to be tracked.
 
@@ -157,13 +146,12 @@ class MFC (DAQ):
             logging.error("MFC, fetch_data", e)
             self.is_connected = False
             return False
-        dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")  # Get current timestamp
-        timestamp = time.time() - self.start_time
+        dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")  # Get current datetime
 
         # Remove the 'control_point' and 'gas' keys from the result
         fc_result.pop('control_point', None)
         fc_result.pop('gas', None)
-        data = {'timestamp': timestamp, 'datetime': dt, 'values': fc_result}
+        data = {'datetime': dt, 'values': fc_result}
 
         # Put the data into the data queue for a sliding window
         self._track_data(data)
@@ -250,10 +238,9 @@ class HumiditySensor(DAQ):
             if str(e).find("not connected") > 0:
                 self.is_connected = False
             return False
-        dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")  # Get current timestamp
-        timestamp = time.time() - self.start_time
+        dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")  # Get current datetime
 
-        data = {'timestamp': timestamp, 'datetime': dt, 'values': result}
+        data = {'datetime': dt, 'values': result}
 
         # Put the data into the data queue for a sliding window
         self._track_data(data)
@@ -277,7 +264,7 @@ class DummyDAQ(DAQ):
 
         timestamp = time.time() - DAQ.start_time
         dt = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')
-        data = {'timestamp': timestamp, 'datetime': dt, 
+        data = {'datetime': dt, 
             'values': {'y1': 20*math.sin(2*math.pi*self.freq * timestamp) + 20, 'y2': 20*math.cos(2*math.pi*self.freq * timestamp) +20}}
         
         # Put the data into the data queue for a sliding window
