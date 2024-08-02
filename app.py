@@ -52,6 +52,7 @@ daq_instances = {
     'MFC2': Hardware.MFC(),
     'SHT1': Hardware.HumiditySensor(HSI),
     'SHT2': Hardware.HumiditySensor(HSI),
+    'humidity_setpoint': Hardware.HumiditySetpoint(),
 }
 hg = Hardware.HardwareGroup(daq_instances, 10)
 

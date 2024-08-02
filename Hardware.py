@@ -8,6 +8,8 @@ import logging
 from alicat import FlowController
 from HumiditySensorInterface import HumiditySensorInterface
 import sys
+import numpy as np
+import sympy as sp
 
 
 # Define a class to represent a generic Data Aquisition component.  
@@ -27,7 +29,8 @@ class DAQ:
 
         self.is_connected = False
 
-    
+    def reset_start_time(self):
+        DAQ.start_time = time.time()
 
     async def fetch_data(self):
         """
@@ -40,7 +43,7 @@ class DAQ:
         Remember to put the data into the data queue using self._track_data(data)
 
         Returns:
-            bool: True if data is fetched successfully, False otherwise.
+            data is fetched successfully, False otherwise.
         """
         await asyncio.sleep(random.uniform(0.01, 0.02))
 
@@ -352,4 +355,97 @@ class HardwareGroup:
     
     def get_list(self, daq_key):
         return self.daq_lists[daq_key]
+
+class HumiditySetpoint(DAQ):
+    def __init__(self):
+        super().__init__()
+        self.is_connected = True
+        self.setpoint_func = None
+        self.time_points = None
+        self.setpoints = None
+
+    def set_setpoint(self, setpoint, time=None):
+        """
+        Set the setpoint function based on the given setpoint values and optional time intervals.
+
+        Parameters:
+        setpoint (int, float, list, np.ndarray): Setpoint value(s).
+        time (list, np.ndarray, optional): Corresponding time points for the setpoints. Default is None.
+        """
+        if isinstance(setpoint, (int, float)) and time is None:
+            self.setpoint_func = lambda t: setpoint
+        elif isinstance(setpoint, (list, np.ndarray)) and isinstance(time, (list, np.ndarray)):
+            self.setpoints = np.array(setpoint)
+            self.time_points = np.array(time)
+            self.setpoint_func = self._piecewise_setpoint
+        else:
+            raise ValueError("Invalid input: setpoint must be a single number or a list/array with corresponding time list/array.")
+
+    def _piecewise_setpoint(self, t_value):
+        """
+        Evaluate the piecewise setpoint function at a given time value.
+
+        Parameters:
+        t_value (float): The time at which to evaluate the setpoint function.
+
+        Returns:
+        float: The setpoint value at the given time.
+        """
+        index = np.searchsorted(self.time_points, t_value, side='right') - 1
+        if index < 0:
+            index = 0
+        return self.setpoints[index]
+
+    async def fetch_data(self):
+        t_value = time.time() - DAQ.start_time
+        if self.setpoint_func is not None:
+            # Saves the data to a file, if save file is defined
+            self._track_data(self.setpoint_func(t_value))
+
+            return self.setpoint_func(t_value)
+        else:
+            return False
+
+
+
+
+
+def parse_timeseries(expression_duration_pairs):
+    """
+    Parses a list of expression-duration pairs and generates a time series of values.
+
+    Parameters:
+    expression_duration_pairs (list): A list of tuples where each tuple (expr, dur) contains an expression (string) and its duration (float).
+
+    Returns:
+    tuple: A tuple containing two numpy arrays - the time values and the corresponding values generated from the expressions.
+    """
+
+    t = sp.symbols('t')
+    values = []
+    time_s = []
+
+    current_time = 0
+    for expr, duration in expression_duration_pairs:
+        # Skip empty expressions
+        # if len(expr) == 0 or duration == :
+        #     continue
+
+        # Parse the expression
+        parsed_expr = sp.sympify(expr)
+        # Create a numpy function from the sympy expression
+        func = sp.lambdify(t, parsed_expr, modules='numpy')
+
+        # Generate the times for this duration
+        time_values = np.linspace(0, duration, int(duration * 60))
+        segment_values = [func(x) for x in time_values]
+
+        # Append the values and times
+        values.extend(segment_values)
+        time_s.extend(time_values + current_time)
+        
+        # Update current time for the next segment
+        current_time += duration
+
+    return np.array(time_s), np.array(values)
 

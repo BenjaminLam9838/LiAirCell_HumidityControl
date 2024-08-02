@@ -1,6 +1,16 @@
 import numpy as np
 import sympy as sp
 
+class HumiditySetpoint:
+    def __init__(self, setpoint):
+        self.setpoint = setpoint
+
+    # Create a function to dynamically change the setpoint function
+    def set_setpoint(self, setpoint):
+        self.setpoint = setpoint
+
+    
+
 def parse_timeseries(expression_duration_pairs):
     """
     Parses a list of expression-duration pairs and generates a time series of values.
