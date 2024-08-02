@@ -9,6 +9,7 @@ const components = {
     'MFC2': new MFC('MFC2', '/MFC2'),
     'SHT1': new Sensor('SHT1', '/SHT1'),
     'SHT2': new Sensor('SHT2', '/SHT2'),
+    'humidity_setpoint': new HumiditySetpoint('Humidity Setpoint', '/humidity_setpoint'),
     'test1': new DAQ('Test1', '/test1'),
     'test2': new DAQ('Test2', '/test2'),
     'test3': new DAQ('Test3', '/test3'),
@@ -45,6 +46,9 @@ $(document).ready(function() {
 
     $('#startRecordingButton').click(handleStartRecordingButton);       //Form submission for saving the file and recording data
     $('#stopRecordingButton').click(handleStopRecordingButton);       //Stop the recording
+
+    // Submit button click event
+    $('#plot-segments').click(handlePlotSegmentsButton);
 
     //Event listeners for the modal form submission
     $('#sensorForm').submit((e) => {
@@ -161,8 +165,6 @@ async function getData(){
 //This defines what each plot will show
 function processMainplot(frameData) {
     data = {
-            MFC1_flowrate: frameData['MFC1']['flowrate'], 
-            MFC2_flowrate: frameData['MFC2']['flowrate'],
             SHT1_temperature: frameData['SHT1']['temperature'], 
             SHT1_humidity: frameData['SHT1']['humidity'],
             SHT2_temperature: frameData['SHT2']['temperature'],
@@ -412,7 +414,6 @@ function handleStopRecordingButton() {
     updateRecordingStatusHTML();
 }
 
-
 //Function to handle the recording status HTML
 // Disables the Start Recording button and enables the Stop Recording button when recording
 // or vice versa
@@ -429,4 +430,77 @@ function updateRecordingStatusHTML() {
         $('#startRecordingButton').prop('disabled', false);                                                      // Enable the start recording button
         $('#stopRecordingButton').prop('disabled', true);                                                     // Disable the stop recording button
     }
+}
+
+
+/////////
+// Plot Arbitrary Segments
+//////////
+function handlePlotSegmentsButton() {
+    // Collect all segment settings
+    let segmentSettings = getArbSegments();
+    
+    console.log('Sending Segments', segmentSettings);
+    // Send the segment settings to the server
+    fetch('/plot_flow_arbitrary', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(segmentSettings)
+    }).then(response => response.json())    // Parse the JSON response
+    .then(data => {                         // Use the data to plot the segments
+        console.log('Plotting Segments:', data);
+        // Create a Plotly chart
+        makeArbSegmentPlot(data);
+    }).catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+/**
+ * This function is responsible for collecting all segment settings from the form.
+ *
+ * @returns {Array} - An array of segment settings.
+ */
+function getArbSegments() {
+    var segmentSettings = [];
+    $('.segment-row').each(function() {
+        var duration = $(this).find('input[name="duration"]').val();
+        var segmentString = $(this).find('input[name="segment_string"]').val();
+        segmentSettings.push({ duration: duration, 
+                            segmentString: segmentString });
+    });
+    return segmentSettings;
+}
+
+/**
+ * This function is responsible for creating a plot based on the provided data.
+ *
+ * @param {Object} data - The data used to generate the plot.
+ */
+function makeArbSegmentPlot(data) {
+    var chartData = [
+        {
+            x: data.time,
+            y: data.values,
+            type: 'scatter',
+            mode: 'lines',
+        }
+    ];
+
+    var layout = {
+        xaxis: {
+            title: 'Duration [min]'
+        },
+        margin: {
+            l: 50,  // left margin in pixels
+            r: 50,  // right margin in pixels
+            t: 10,  // top margin in pixels
+            b: 50,  // bottom margin in pixels
+            pad: 5  // padding around the plot area in pixels
+        },
+        height: 400
+    };
+    Plotly.newPlot('arbitrarySetpointModal-chart', chartData, layout);
 }

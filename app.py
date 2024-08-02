@@ -246,8 +246,10 @@ async def set_control():
 
         #TODO: Set the setpoint flow rates for the MFCs
 
+
         #Also return the timeseries to the client for plotting
         time_s, values = parse_timeseries(CONTROL_PARAMS)
+
         return jsonify({'success': True, 'message': message, 
                         'control_mode': CONTROL_MODE, 'control_params': CONTROL_PARAMS, 
                         'time': time_s.tolist(), 'values': values.tolist()}), 200

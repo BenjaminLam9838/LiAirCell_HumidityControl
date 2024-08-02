@@ -296,3 +296,10 @@ class Sensor extends DAQ {
 
     }
 }
+
+class HumiditySetpoint extends DAQ {
+    constructor(label, accessPoint) {
+        super(label, accessPoint);
+    }
+    
+}

@@ -26,7 +26,7 @@ class DAQ:
 
         self.data_queue = queue.Queue(10000)
         self.save_file = None
-
+        self.port = None
         self.is_connected = False
 
     def reset_start_time(self):
@@ -368,6 +368,25 @@ class HumiditySetpoint(DAQ):
         else:
             raise ValueError("Invalid input: setpoint must be a single number or a list/array with corresponding time list/array.")
 
+    def get_setpoint(self, t_value):
+        """
+        Get the setpoint value at a given time.
+
+        Parameters:
+        t_value (float): The time at which to evaluate the setpoint function.
+
+        Returns:
+        float: The setpoint value at the given time.
+        """
+        if self.setpoint_func is not None:
+            # Saves the data to a file, if save file is defined
+            self._track_data(self.setpoint_func(t_value))
+
+            return self.setpoint_func(t_value)
+        else:
+            raise ValueError("Setpoint function is not defined.")
+
+
     def _piecewise_setpoint(self, t_value):
         """
         Evaluate the piecewise setpoint function at a given time value.
@@ -385,14 +404,16 @@ class HumiditySetpoint(DAQ):
 
     async def fetch_data(self):
         t_value = time.time() - DAQ.start_time
-        if self.setpoint_func is not None:
-            # Saves the data to a file, if save file is defined
-            self._track_data(self.setpoint_func(t_value))
-
-            return self.setpoint_func(t_value)
-        else:
+        try:
+            setpoint = self.get_setpoint(t_value)
+        except ValueError as e:
             return False
+        
+        self._track_data(setpoint)
+        
+        return setpoint
 
+    
 
 
 
