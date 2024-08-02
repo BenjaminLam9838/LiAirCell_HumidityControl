@@ -346,7 +346,7 @@ class HardwareGroup:
 class HumiditySetpoint(DAQ):
     def __init__(self):
         super().__init__()
-        self.is_connected = True
+        self.is_connected = False
         self.setpoint_func = None
         self.time_points = None
         self.setpoints = None
@@ -379,9 +379,6 @@ class HumiditySetpoint(DAQ):
         float: The setpoint value at the given time.
         """
         if self.setpoint_func is not None:
-            # Saves the data to a file, if save file is defined
-            self._track_data(self.setpoint_func(t_value))
-
             return self.setpoint_func(t_value)
         else:
             raise ValueError("Setpoint function is not defined.")
@@ -403,16 +400,36 @@ class HumiditySetpoint(DAQ):
         return self.setpoints[index]
 
     async def fetch_data(self):
+        # Don't output data if not connected. In this case, it means that the setpoint functionality
+        # has not been started.
+        if not self.is_connected:
+            return False
+
         t_value = time.time() - DAQ.start_time
         try:
             setpoint = self.get_setpoint(t_value)
         except ValueError as e:
             return False
         
-        self._track_data(setpoint)
+        dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")  # Get current datetime
+        data = {'datetime': dt, 'values': {'humidity_setpoint': setpoint}}
         
-        return setpoint
-
+        self._track_data(data)
+        return data
+    
+    def connect(self):
+        '''
+        Use the connection to start the setpoint function
+        '''
+        self.is_connected = True
+        DAQ.start_time = time.time()
+        return [self.is_connected, "Setpoint definition started"]
+    
+    def close_save_file(self):
+        super().close_save_file()
+        self.is_connected = False
+    
+    
     
 
 

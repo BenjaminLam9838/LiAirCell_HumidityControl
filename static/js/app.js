@@ -71,6 +71,7 @@ $(document).ready(function() {
 // Loop function to refresh the site
 setInterval(async () => {
     const frameData = await getData();
+    console.log(frameData);
     updatePlots(frameData);
     updateDiagramText(frameData);
     updateConnectionStatus();
@@ -156,7 +157,9 @@ async function getData(){
     // Fetch data from all the components
     data = {};
     for (let key in components) {
+        console.log(key);
         data[key] = await components[key].fetchData();
+        console.log(key, data[key]);
     }
     return data;
 }
@@ -164,6 +167,8 @@ async function getData(){
 //Process the data to be plotted, basically extract the relevant data from the frameData.
 //This defines what each plot will show
 function processMainplot(frameData) {
+
+    console.log(frameData)
     data = {
             SHT1_temperature: frameData['SHT1']['temperature'], 
             SHT1_humidity: frameData['SHT1']['humidity'],
@@ -171,6 +176,7 @@ function processMainplot(frameData) {
             SHT2_humidity: frameData['SHT2']['humidity'],
             test1_y1: frameData['test1']['y1'],
             test1_y2: frameData['test1']['y2'],
+            humidity_setpoint: frameData['humidity_setpoint']['humidity_setpoint']
     };
 
     return data;
@@ -318,6 +324,12 @@ function handleControlSubmitButton() {
             break;
         case 'ARB':
             console.log('Arbitrary Control');
+            // Collect all segment settings
+            params = {  'segments': getArbSegments(),
+                        'flowRate': $('#arbitrarySetpoint-flowRate').val(),
+                    };
+            
+
             break;
     }
 

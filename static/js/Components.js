@@ -17,23 +17,22 @@ class DAQ {
             if (data.length === 0) {
                 return [];
             }
+            console.log(`[FETCH DATA] ${this.label}:`, data);
 
             // Process the data
             let processedData = data.reduce((acc, d) => {
                 // For each key in the 'values' object of the current data point 'd'
+                console.log(d);
                 Object.keys(d.values).forEach(key => {
                     // If the accumulator object does not already have this key, initialize it
                     if (!acc[key]) {
                         acc[key] = {
                             datetime: [],  // Array to store datetime values for this key
-                            timestamp: [], // Array to store timestamp values for this key
                             values: []     // Array to store the actual data values for this key
                         };
                     }
                     // Convert the 'datetime' string to a Date object and push it to the 'datetime' array
                     acc[key].datetime.push(new Date(d.datetime));
-                    // Push the 'timestamp' value to the 'timestamp' array
-                    acc[key].timestamp.push(d.timestamp);
                     // Push the actual data value for this key to the 'values' array
                     acc[key].values.push(d.values[key]);
                 });
@@ -301,5 +300,4 @@ class HumiditySetpoint extends DAQ {
     constructor(label, accessPoint) {
         super(label, accessPoint);
     }
-    
 }

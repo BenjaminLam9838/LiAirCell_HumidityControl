@@ -31,8 +31,6 @@ logging.getLogger('werkzeug').setLevel(logging.WARNING)
 CONTROL_MODE = 'MAN'
 CONTROL_PARAMS = None
 CONTROL_LOOP_ON = False
-CONTROL_LOOP_SETPOINTFUNC = None
-CONTROL_LOOP_STARTTIME = None
 DEFAULT_SAVE_DIR = os.getcwd() + '/data'
 
 # Humidity Sensor Interface, handles Arduino communication
@@ -98,6 +96,7 @@ app.config['SERVER_NAME'] = 'localhost:4000'  # Replace with your server name an
 def fetch_data(daq_id):
     daq = daq_instances.get(daq_id)
     data = daq.pop_data_queue()
+
     return jsonify(data)
 
 # Route to connect to a component using a specific port
@@ -150,9 +149,14 @@ def start_recording_data():
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+    # Set the save file for each DAQ instance
     for daq_key in daq_instances.keys():
         filepath = f"{directory}/{daq_key}_{current_timestamp}.csv"
         daq_instances[daq_key].set_save_file( filepath )
+
+    # Start the setpoint functionality if not already started
+    if not daq_instances['humidity_setpoint'].is_connected and CONTROL_LOOP_ON: 
+        daq_instances['humidity_setpoint'].connect()
 
     return jsonify({'success': True, 'message': 'Data recording started'}), 200
 
@@ -220,6 +224,8 @@ async def set_control():
                              {'flow_rate': CONTROL_PARAMS['MFC2']} )
 
         message = "MFCs set to manual control"
+        return jsonify({'success': True, 'message': message, 
+                    'control_mode': CONTROL_MODE, 'control_params': CONTROL_PARAMS}), 200
 
     elif CONTROL_MODE == 'SPT':
         # Check if each of the control parameters are not blank
@@ -234,29 +240,34 @@ async def set_control():
 
         # TODO: Set the setpoints for the control loop
         CONTROL_LOOP_ON = True
-        CONTROL_LOOP_SETPOINTFUNC = lambda: CONTROL_PARAMS['humidity']
+        daq_instances['humidity_setpoint'].set_setpoint(CONTROL_PARAMS['humidity'])
+        daq_instances['humidity_setpoint'].connect()
+
 
         message = "MFCs set to setpoint control"
+        return jsonify({'success': True, 'message': message, 
+                    'control_mode': CONTROL_MODE, 'control_params': CONTROL_PARAMS}), 200
 
     elif CONTROL_MODE == 'ARB':
         CONTROL_LOOP_ON = True
-        CONTROL_PARAMS = [sect for sect in CONTROL_PARAMS if sect['segmentString'] != '' or sect['duration'] != ''] #Remove the empty sections
-        CONTROL_PARAMS = [ (sect['segmentString'], float(sect['duration'])) for sect in CONTROL_PARAMS ]     # Set the expression-duration pairs as the control parameters
+        #Remove the empty sections
+        CONTROL_PARAMS['segments'] = [sect for sect in CONTROL_PARAMS['segments'] if sect['segmentString'] != '' or sect['duration'] != ''] 
+        # Set the expression-duration pairs as the control parameters
+        CONTROL_PARAMS['segments'] = [ (sect['segmentString'], float(sect['duration'])) for sect in CONTROL_PARAMS['segments'] ]     
+
+        CONTROL_PARAMS['flowRate'] = max(0, min(100, float(CONTROL_PARAMS['flowRate'])))
         message = "MFCs set to arbitrary control"
 
         #TODO: Set the setpoint flow rates for the MFCs
+        time_s, values = parse_timeseries(CONTROL_PARAMS['segments'])
 
-
-        #Also return the timeseries to the client for plotting
-        time_s, values = parse_timeseries(CONTROL_PARAMS)
+        # Set the setpoints for the control loop
+        daq_instances['humidity_setpoint'].set_setpoint(values, time_s)
+    
 
         return jsonify({'success': True, 'message': message, 
                         'control_mode': CONTROL_MODE, 'control_params': CONTROL_PARAMS, 
                         'time': time_s.tolist(), 'values': values.tolist()}), 200
-
-
-    return jsonify({'success': True, 'message': message, 
-                    'control_mode': CONTROL_MODE, 'control_params': CONTROL_PARAMS}), 200
 
 @app.route('/')
 def index():
