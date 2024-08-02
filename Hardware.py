@@ -351,24 +351,24 @@ class HumiditySetpoint(DAQ):
         self.time_points = None
         self.setpoints = None
 
-    def set_setpoint(self, setpoint, time=None):
+    def set_setpoint(self, setpoint, time_min=None):
         """
         Set the setpoint function based on the given setpoint values and optional time intervals.
 
         Parameters:
-        setpoint (int, float, list, np.ndarray): Setpoint value(s).
-        time (list, np.ndarray, optional): Corresponding time points for the setpoints. Default is None.
+        setpoint (int, float, list): Setpoint value(s).
+        time (list, optional): Corresponding time points for the setpoints. Default is None.
         """
-        if isinstance(setpoint, (int, float)) and time is None:
+        if isinstance(setpoint, (int, float)) and time_min is None:
             self.setpoint_func = lambda t: setpoint
-        elif isinstance(setpoint, (list, np.ndarray)) and isinstance(time, (list, np.ndarray)):
-            self.setpoints = np.array(setpoint)
-            self.time_points = np.array(time)
+        elif isinstance(setpoint, list) and isinstance(time_min, list):
+            self.setpoints = setpoint
+            self.time_points = [t*60 for t in time_min]      # Convert minutes to seconds
             self.setpoint_func = self._piecewise_setpoint
         else:
             raise ValueError("Invalid input: setpoint must be a single number or a list/array with corresponding time list/array.")
 
-    def get_setpoint(self, t_value):
+    def get_setpoint(self, time_s):
         """
         Get the setpoint value at a given time.
 
@@ -379,12 +379,12 @@ class HumiditySetpoint(DAQ):
         float: The setpoint value at the given time.
         """
         if self.setpoint_func is not None:
-            return self.setpoint_func(t_value)
+            return self.setpoint_func(time_s)
         else:
             raise ValueError("Setpoint function is not defined.")
 
 
-    def _piecewise_setpoint(self, t_value):
+    def _piecewise_setpoint(self, time_s):
         """
         Evaluate the piecewise setpoint function at a given time value.
 
@@ -394,7 +394,7 @@ class HumiditySetpoint(DAQ):
         Returns:
         float: The setpoint value at the given time.
         """
-        index = np.searchsorted(self.time_points, t_value, side='right') - 1
+        index = np.searchsorted(self.time_points, time_s, side='right') - 1
         if index < 0:
             index = 0
         return self.setpoints[index]
@@ -405,34 +405,47 @@ class HumiditySetpoint(DAQ):
         if not self.is_connected:
             return False
 
-        t_value = time.time() - DAQ.start_time
+        timestamp = time.time() - DAQ.start_time
+        dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")  # Get current datetime
         try:
-            setpoint = self.get_setpoint(t_value)
+            setpoint = self.get_setpoint(timestamp)
         except ValueError as e:
             return False
         
-        dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")  # Get current datetime
-        data = {'datetime': dt, 'values': {'humidity_setpoint': setpoint}}
-        
+        data = {'timestamp': timestamp, 'datetime': dt, 'values': {'humidity_setpoint': setpoint}}
+
         self._track_data(data)
         return data
     
-    def connect(self):
+    def enable(self):
         '''
         Use the connection to start the setpoint function
         '''
         self.is_connected = True
         DAQ.start_time = time.time()
-        return [self.is_connected, "Setpoint definition started"]
+        return [self.is_connected, 
+                f"Setpoint definition started at {datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')}"]
     
+    def disable(self):
+        '''
+        Use the connection to stop the setpoint function
+        '''
+        self.is_connected = False
+
+    @property
+    def is_enabled(self):
+        """
+        Getter method for is_enabled.
+
+        Returns:
+            bool: The value of self.is_connected.
+        """
+        return self.is_connected
+
     def close_save_file(self):
         super().close_save_file()
         self.is_connected = False
     
-    
-    
-
-
 
 
 def parse_timeseries(expression_duration_pairs):
@@ -448,7 +461,7 @@ def parse_timeseries(expression_duration_pairs):
 
     t = sp.symbols('t')
     values = []
-    time_s = []
+    time_min = []
 
     current_time = 0
     for expr, duration in expression_duration_pairs:
@@ -462,15 +475,16 @@ def parse_timeseries(expression_duration_pairs):
         func = sp.lambdify(t, parsed_expr, modules='numpy')
 
         # Generate the times for this duration
-        time_values = np.linspace(0, duration, int(duration * 60))
-        segment_values = [func(x) for x in time_values]
+        segment_time = [i/60 for i in range( int(duration * 60) +1 )]
+        segment_values = [func(x) for x in segment_time]
 
         # Append the values and times
         values.extend(segment_values)
-        time_s.extend(time_values + current_time)
+        time_min.extend([t+current_time for t in segment_time])
         
         # Update current time for the next segment
         current_time += duration
 
-    return np.array(time_s), np.array(values)
+
+    return time_min, values
 

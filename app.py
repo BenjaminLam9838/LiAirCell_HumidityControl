@@ -1,8 +1,8 @@
 from flask import Flask, jsonify, render_template, request
-from HelperFunctions import *
 from HumiditySensorInterface import HumiditySensorInterface
 import logging
 import Hardware
+from Hardware import parse_timeseries
 import asyncio
 import datetime
 import math
@@ -11,6 +11,7 @@ import threading
 import uuid
 import os
 import sys
+import json
 
 TEST_MODE = True   # Set to True to run in test mode, averts required hardware connections
 
@@ -30,7 +31,6 @@ logging.getLogger('werkzeug').setLevel(logging.WARNING)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 CONTROL_MODE = 'MAN'
 CONTROL_PARAMS = None
-CONTROL_LOOP_ON = False
 DEFAULT_SAVE_DIR = os.getcwd() + '/data'
 
 # Humidity Sensor Interface, handles Arduino communication
@@ -89,9 +89,40 @@ else:
 app = Flask(__name__, static_url_path='/static')
 app.config['SERVER_NAME'] = 'localhost:4000'  # Replace with your server name and port
 
+
+
+
+
 ######################
 ### FLASK ROUTES
 ######################
+
+def print_non_serializable_parts(data):
+    """
+    Recursively checks the data to find and print non-JSON serializable parts.
+    """
+    def is_serializable(obj):
+        try:
+            json.dumps(obj)
+            return True
+        except TypeError:
+            # print the object type
+            print(f'Non-serializable type found: {type(obj)}')
+            return False
+
+    def check_data(data, path=''):
+        if isinstance(data, list):
+            for i, item in enumerate(data):
+                check_data(item, f'{path}[{i}]')
+        elif isinstance(data, dict):
+            for key, value in data.items():
+                check_data(value, f'{path}["{key}"]')
+        elif not is_serializable(data):
+            print(f'Non-serializable data found at {path}: {data}')
+
+    check_data(data)
+    print('Done checking non-serializable parts.')
+
 @app.route('/<daq_id>/fetch_data', methods=['GET'])
 def fetch_data(daq_id):
     daq = daq_instances.get(daq_id)
@@ -149,16 +180,18 @@ def start_recording_data():
     if not os.path.exists(directory):
         os.makedirs(directory)
 
+    message = "Data recording started."
+    # Start the setpoint functionality if not already started
+    if not daq_instances['humidity_setpoint'].is_enabled: 
+        _, message_2 = daq_instances['humidity_setpoint'].enable()
+        message += f"   {message_2}"
+        logging.info(f"Setpoint connected: {daq_instances['humidity_setpoint'].is_enabled}")
+
     # Set the save file for each DAQ instance
     for daq_key in daq_instances.keys():
         filepath = f"{directory}/{daq_key}_{current_timestamp}.csv"
         daq_instances[daq_key].set_save_file( filepath )
-
-    # Start the setpoint functionality if not already started
-    if not daq_instances['humidity_setpoint'].is_connected and CONTROL_LOOP_ON: 
-        daq_instances['humidity_setpoint'].connect()
-
-    return jsonify({'success': True, 'message': 'Data recording started'}), 200
+    return jsonify({'success': True, 'message': message}), 200
 
 # Route to stop data acquisition
 @app.route('/stop_recording_data', methods=['POST'])
@@ -178,12 +211,9 @@ async def plot_flow_arbitrary():
         expr_pairs = [ (sect['segmentString'], float(sect['duration'])) for sect in requestData ]
 
         time_s, values = parse_timeseries(expr_pairs)
-        print(time_s, values)
-        #TODO: Set the setpoint flow rates for the MFCs
-
 
         # Return the timeseries to the client for plotting
-        return jsonify({'time': time_s.tolist(), 'values': values.tolist()})
+        return jsonify({'time': time_s, 'values': values})
     # if request.method == 'GET':
     #     jsonify({'time': time_s.tolist(), 'values': values.tolist()})
 
@@ -204,7 +234,7 @@ async def set_control():
     message = ""
     # Set the MFCs control behavior, depending on the control scheme
     if CONTROL_MODE == 'MAN':
-        CONTROL_LOOP_ON = False
+        daq_instances['humidity_setpoint'].disable()    #Disable the setpoint control
         # Check if each of the control parameters are not blank
         if CONTROL_PARAMS['MFC1'] == '' or CONTROL_PARAMS['MFC2'] == '':
             return jsonify({'success': False, 'message': 'MFC flow rate(s) blank'}), 400
@@ -238,10 +268,9 @@ async def set_control():
         CONTROL_PARAMS['flowRate'] = max(0, min(100, CONTROL_PARAMS['flowRate']))
         CONTROL_PARAMS['humidity'] = max(0, min(100, CONTROL_PARAMS['humidity']))   
 
-        # TODO: Set the setpoints for the control loop
-        CONTROL_LOOP_ON = True
+        # Set the setpoints for the control loop
         daq_instances['humidity_setpoint'].set_setpoint(CONTROL_PARAMS['humidity'])
-        daq_instances['humidity_setpoint'].connect()
+        daq_instances['humidity_setpoint'].enable()
 
 
         message = "MFCs set to setpoint control"
@@ -249,7 +278,6 @@ async def set_control():
                     'control_mode': CONTROL_MODE, 'control_params': CONTROL_PARAMS}), 200
 
     elif CONTROL_MODE == 'ARB':
-        CONTROL_LOOP_ON = True
         #Remove the empty sections
         CONTROL_PARAMS['segments'] = [sect for sect in CONTROL_PARAMS['segments'] if sect['segmentString'] != '' or sect['duration'] != ''] 
         # Set the expression-duration pairs as the control parameters
@@ -258,16 +286,18 @@ async def set_control():
         CONTROL_PARAMS['flowRate'] = max(0, min(100, float(CONTROL_PARAMS['flowRate'])))
         message = "MFCs set to arbitrary control"
 
-        #TODO: Set the setpoint flow rates for the MFCs
+        # Set the setpoint flow rates for the MFCs
         time_s, values = parse_timeseries(CONTROL_PARAMS['segments'])
 
         # Set the setpoints for the control loop
+        # print("fdadfsdfsa")
+        # print(f"time type: {type(time_s)}, value type: {type(values)}")
+        # print(f"time[0] type: {type(time_s[0])}, value[0] type: {type(values[0])}")
         daq_instances['humidity_setpoint'].set_setpoint(values, time_s)
     
-
         return jsonify({'success': True, 'message': message, 
                         'control_mode': CONTROL_MODE, 'control_params': CONTROL_PARAMS, 
-                        'time': time_s.tolist(), 'values': values.tolist()}), 200
+                        'time': time_s, 'values': values}), 200
 
 @app.route('/')
 def index():
@@ -290,7 +320,7 @@ async def run_loop():
         # the recent data to a running windowed list of the last 50 elements
         await hg.fetch_data()
 
-        if CONTROL_LOOP_ON:
+        if daq_instances['humidity_setpoint'].is_enabled:
             # Calculate the control loop, get desired setpoints
             # Set the MFCs
             pass

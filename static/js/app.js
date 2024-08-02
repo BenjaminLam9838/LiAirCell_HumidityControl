@@ -71,7 +71,6 @@ $(document).ready(function() {
 // Loop function to refresh the site
 setInterval(async () => {
     const frameData = await getData();
-    console.log(frameData);
     updatePlots(frameData);
     updateDiagramText(frameData);
     updateConnectionStatus();
@@ -157,9 +156,7 @@ async function getData(){
     // Fetch data from all the components
     data = {};
     for (let key in components) {
-        console.log(key);
         data[key] = await components[key].fetchData();
-        console.log(key, data[key]);
     }
     return data;
 }
@@ -167,8 +164,6 @@ async function getData(){
 //Process the data to be plotted, basically extract the relevant data from the frameData.
 //This defines what each plot will show
 function processMainplot(frameData) {
-
-    console.log(frameData)
     data = {
             SHT1_temperature: frameData['SHT1']['temperature'], 
             SHT1_humidity: frameData['SHT1']['humidity'],
@@ -328,8 +323,6 @@ function handleControlSubmitButton() {
             params = {  'segments': getArbSegments(),
                         'flowRate': $('#arbitrarySetpoint-flowRate').val(),
                     };
-            
-
             break;
     }
 
@@ -350,12 +343,12 @@ function handleControlSubmitButton() {
     .then(data => {
         // Server handles control setting ranges, reset the control values to the server values
         // Also update the alert to show the current control mode
-        updateControlModeAlert(data);
+        updateControlModeDisplay(data);
     });
 }
 
 
-function updateControlModeAlert(data) {
+function updateControlModeDisplay(data) {
     CONTROL_MODE = data['control_mode'];
     switch(CONTROL_MODE) {
         case 'MAN':
@@ -377,11 +370,17 @@ function updateControlModeAlert(data) {
             break;
         case 'ARB':
             console.log('Arbitrary Control');
+            //set the text boxes to the server values
+            $('#setpointControl-flowRate').val(data['control_params']['flowRate']);
+
 
             $('#controlModeAlert').removeClass('alert-light').addClass('alert-success');
             $('#controlModeAlert-text').html(
                 `<b>Arbitrary Control</b> mode set. The profile is executed when the data recording is started.`);
         
+            console.log('Plotting Segments:', data);
+            // Create a Plotly chart
+            makeArbSegmentPlot(data);
             break;
     }
 }
@@ -405,10 +404,11 @@ function handleStartRecordingButton() {
     .then(response => response.json())
     .then(data => {
         console.log(data);
+        IS_RECORDING = true;
+        updateRecordingStatusHTML(data['message']);
     });
     
-    IS_RECORDING = true;
-    updateRecordingStatusHTML();
+    
 }
 
 //Stop Recording button handler
@@ -430,12 +430,13 @@ function handleStopRecordingButton() {
 // Disables the Start Recording button and enables the Stop Recording button when recording
 // or vice versa
 // Also changes the alert text and class to indicate the recording status
-function updateRecordingStatusHTML() {
+function updateRecordingStatusHTML(message) {
     if (IS_RECORDING) {
         $('#recordingStatusAlert').removeClass('alert-secondary').addClass('alert-success');       // Change the alert class to success
-        $('#recordingStatusAlert-text').text('Data Recording');                                  // Change the alert text
-        $('#startRecordingButton').prop('disabled', true);                                      // Disable the start recording button
-        $('#stopRecordingButton').prop('disabled', false);                                       // Enable the stop recording button
+        console.log(message);
+        $('#recordingStatusAlert-text').text(message);      // Change the alert text
+        $('#startRecordingButton').prop('disabled', true);  // Disable the start recording button
+        $('#stopRecordingButton').prop('disabled', false);  // Enable the stop recording button
     } else {
         $('#recordingStatusAlert').removeClass('alert-success').addClass('alert-secondary');    // Change the alert class to light
         $('#recordingStatusAlert-text').text('Data Not Recording');                                  // Change the alert text
@@ -497,7 +498,7 @@ function makeArbSegmentPlot(data) {
             x: data.time,
             y: data.values,
             type: 'scatter',
-            mode: 'lines',
+            mode: 'lines+markers',
         }
     ];
 
