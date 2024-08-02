@@ -2,7 +2,6 @@ from flask import Flask, jsonify, render_template, request
 from HumiditySensorInterface import HumiditySensorInterface
 import logging
 import Hardware
-from Hardware import parse_timeseries
 import asyncio
 import datetime
 import math
@@ -12,6 +11,7 @@ import uuid
 import os
 import sys
 import json
+import simple_pid
 
 TEST_MODE = True   # Set to True to run in test mode, averts required hardware connections
 
@@ -29,8 +29,9 @@ logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
 # GLOBAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-CONTROL_MODE = 'MAN'
-CONTROL_PARAMS = None
+CONTROL_DATA = { 'mode': 'MAN', 'params': None }
+HARDWARE_LOOP_DELAY = 0.5
+PID_GAINS = [5.7585,15.9046,0]  # PID gains for the control loop [Kp, Ki, Kd]
 DEFAULT_SAVE_DIR = os.getcwd() + '/data'
 
 # Humidity Sensor Interface, handles Arduino communication
@@ -50,7 +51,7 @@ daq_instances = {
     'MFC2': Hardware.MFC(),
     'SHT1': Hardware.HumiditySensor(HSI),
     'SHT2': Hardware.HumiditySensor(HSI),
-    'humidity_setpoint': Hardware.HumiditySetpoint(),
+    'humidity_setpoint': Hardware.HumiditySetpoint(PID_GAINS, HARDWARE_LOOP_DELAY),
 }
 hg = Hardware.HardwareGroup(daq_instances, 10)
 
@@ -77,8 +78,7 @@ asyncio.run(daq_instances['MFC2'].connect(MFC2_PORT))
 if  daq_instances['MFC1'].is_connected and daq_instances['MFC2'].is_connected:
     # If connected, set MFCs to 0 flow
     logging.info("MFCs connected")
-    CONTROL_MODE = 'MAN'
-    CONTROL_PARAMS = {'MFC1': 0, 'MFC2': 0}
+    CONTROL_DATA = {'mode': 'MAN', 'params': {'MFC1': 0, 'MFC2': 0} }
     hg.add_flask_command( daq_instances['MFC1'].set_flow_rate, {'flow_rate': 0} )
     hg.add_flask_command( daq_instances['MFC2'].set_flow_rate, {'flow_rate': 0} )
 else:
@@ -210,7 +210,7 @@ async def plot_flow_arbitrary():
         requestData = [req for req in requestData if req['segmentString'] != '' or req['duration'] != '']
         expr_pairs = [ (sect['segmentString'], float(sect['duration'])) for sect in requestData ]
 
-        time_s, values = parse_timeseries(expr_pairs)
+        time_s, values = Hardware.HumiditySetpoint.parse_timeseries(expr_pairs)
 
         # Return the timeseries to the client for plotting
         return jsonify({'time': time_s, 'values': values})
@@ -219,84 +219,82 @@ async def plot_flow_arbitrary():
 
 @app.route('/get_current_control', methods=['GET'])
 def get_current_control():
-    return jsonify({'control_mode': CONTROL_MODE, 'control_params': CONTROL_PARAMS}), 200
+    print(CONTROL_DATA)
+    return jsonify({'control_mode': CONTROL_DATA['mode'], 'control_params': CONTROL_DATA['params']}), 200
 
 @app.route('/set_control', methods=['POST'])
 async def set_control():
     requestData = request.get_json()
 
     # Set the control scheme
-    CONTROL_MODE = requestData['controlMode']
+    CONTROL_DATA['mode'] = requestData['controlMode']
     # Record the parameters
-    CONTROL_PARAMS = requestData['params']
-    logging.info(f"Control mode: {CONTROL_MODE} \n{'':20}Control params: {CONTROL_PARAMS}")
+    CONTROL_DATA['params'] = requestData['params']
+    logging.info(f"Control mode: {CONTROL_DATA['mode']} \n{'':20}Control params: {CONTROL_DATA['params']}")
 
     message = ""
     # Set the MFCs control behavior, depending on the control scheme
-    if CONTROL_MODE == 'MAN':
+    if CONTROL_DATA['mode'] == 'MAN':
         daq_instances['humidity_setpoint'].disable()    #Disable the setpoint control
         # Check if each of the control parameters are not blank
-        if CONTROL_PARAMS['MFC1'] == '' or CONTROL_PARAMS['MFC2'] == '':
+        if CONTROL_DATA['params']['MFC1'] == '' or CONTROL_DATA['params']['MFC2'] == '':
             return jsonify({'success': False, 'message': 'MFC flow rate(s) blank'}), 400
 
         # Parse the control parameters as floats
-        CONTROL_PARAMS = {key: float(val) for key, val in CONTROL_PARAMS.items()}
+        CONTROL_DATA['params'] = {key: float(val) for key, val in CONTROL_DATA['params'].items()}
         
         # Ensure the flow rates are within the limits.  If not, set them to the limits
-        CONTROL_PARAMS['MFC1'] = max(0, min(100, CONTROL_PARAMS['MFC1']))
-        CONTROL_PARAMS['MFC2'] = max(0, min(100, CONTROL_PARAMS['MFC2']))
-        logging.info(f"Setting MFCs to {CONTROL_PARAMS['MFC1']} and {CONTROL_PARAMS['MFC2']}")
+        CONTROL_DATA['params']['MFC1'] = max(0, min(100, CONTROL_DATA['params']['MFC1']))
+        CONTROL_DATA['params']['MFC2'] = max(0, min(100, CONTROL_DATA['params']['MFC2']))
+        logging.info(f"Setting MFCs to {CONTROL_DATA['params']['MFC1']} and {CONTROL_DATA['params']['MFC2']}")
 
         # Set the MFCs flow rates by adding it to the command queue to be handled by the hardware loop
         hg.add_flask_command( daq_instances['MFC1'].set_flow_rate, 
-                             {'flow_rate': CONTROL_PARAMS['MFC1']} )
+                             {'flow_rate': CONTROL_DATA['params']['MFC1']} )
         hg.add_flask_command( daq_instances['MFC2'].set_flow_rate, 
-                             {'flow_rate': CONTROL_PARAMS['MFC2']} )
+                             {'flow_rate': CONTROL_DATA['params']['MFC2']} )
 
         message = "MFCs set to manual control"
         return jsonify({'success': True, 'message': message, 
-                    'control_mode': CONTROL_MODE, 'control_params': CONTROL_PARAMS}), 200
+                    'control_mode': CONTROL_DATA['mode'], 'control_params': CONTROL_DATA['params']}), 200
 
-    elif CONTROL_MODE == 'SPT':
+    elif CONTROL_DATA['mode'] == 'SPT':
         # Check if each of the control parameters are not blank
-        if CONTROL_PARAMS['flowRate'] == '' or CONTROL_PARAMS['humidity'] == '':
+        if CONTROL_DATA['params']['flowRate'] == '' or CONTROL_DATA['params']['humidity'] == '':
             return jsonify({'success': False, 'message': 'Setpoint(s) blank'}), 400
         
         # Parse the control parameters as floats
-        CONTROL_PARAMS = {key: float(val) for key, val in CONTROL_PARAMS.items()}
+        CONTROL_DATA['params'] = {key: float(val) for key, val in CONTROL_DATA['params'].items()}
         # Ensure the flow rates are within the limits.  If not, set them to the limits
-        CONTROL_PARAMS['flowRate'] = max(0, min(100, CONTROL_PARAMS['flowRate']))
-        CONTROL_PARAMS['humidity'] = max(0, min(100, CONTROL_PARAMS['humidity']))   
+        CONTROL_DATA['params']['flowRate'] = max(0, min(100, CONTROL_DATA['params']['flowRate']))
+        CONTROL_DATA['params']['humidity'] = max(0, min(100, CONTROL_DATA['params']['humidity']))   
 
         # Set the setpoints for the control loop
-        daq_instances['humidity_setpoint'].set_setpoint(CONTROL_PARAMS['humidity'])
+        daq_instances['humidity_setpoint'].set_setpoint(CONTROL_DATA['params']['humidity'])
         daq_instances['humidity_setpoint'].enable()
 
 
         message = "MFCs set to setpoint control"
         return jsonify({'success': True, 'message': message, 
-                    'control_mode': CONTROL_MODE, 'control_params': CONTROL_PARAMS}), 200
+                    'control_mode': CONTROL_DATA['mode'], 'control_params': CONTROL_DATA['params']}), 200
 
-    elif CONTROL_MODE == 'ARB':
+    elif CONTROL_DATA['mode'] == 'ARB':
         #Remove the empty sections
-        CONTROL_PARAMS['segments'] = [sect for sect in CONTROL_PARAMS['segments'] if sect['segmentString'] != '' or sect['duration'] != ''] 
+        CONTROL_DATA['params']['segments'] = [sect for sect in CONTROL_DATA['params']['segments'] if sect['segmentString'] != '' or sect['duration'] != ''] 
         # Set the expression-duration pairs as the control parameters
-        CONTROL_PARAMS['segments'] = [ (sect['segmentString'], float(sect['duration'])) for sect in CONTROL_PARAMS['segments'] ]     
+        CONTROL_DATA['params']['segments'] = [ (sect['segmentString'], float(sect['duration'])) for sect in CONTROL_DATA['params']['segments'] ]     
 
-        CONTROL_PARAMS['flowRate'] = max(0, min(100, float(CONTROL_PARAMS['flowRate'])))
+        CONTROL_DATA['params']['flowRate'] = max(0, min(100, float(CONTROL_DATA['params']['flowRate'])))
         message = "MFCs set to arbitrary control"
 
         # Set the setpoint flow rates for the MFCs
-        time_s, values = parse_timeseries(CONTROL_PARAMS['segments'])
+        time_s, values = Hardware.HumiditySetpoint.parse_timeseries(CONTROL_DATA['params']['segments'])
 
         # Set the setpoints for the control loop
-        # print("fdadfsdfsa")
-        # print(f"time type: {type(time_s)}, value type: {type(values)}")
-        # print(f"time[0] type: {type(time_s[0])}, value[0] type: {type(values[0])}")
         daq_instances['humidity_setpoint'].set_setpoint(values, time_s)
     
         return jsonify({'success': True, 'message': message, 
-                        'control_mode': CONTROL_MODE, 'control_params': CONTROL_PARAMS, 
+                        'control_mode': CONTROL_DATA['mode'], 'control_params': CONTROL_DATA['params'], 
                         'time': time_s, 'values': values}), 200
 
 @app.route('/')
@@ -312,20 +310,45 @@ async def run_loop():
 
     # Looping
     while True:
-        # Check for commands from the Flask app and handle them
+            # Check for commands from the Flask app and handle them
         if not hg.flask_command_queue.empty():
             await hg.run_flask_commands()
         
-        # Query data from all components (DAQs), and save 
-        # the recent data to a running windowed list of the last 50 elements
-        await hg.fetch_data()
-
+        # Query data from all components (DAQs)
+        # Exclude SHT1 and humidity_setpoint, if using control loop.  These
+        # are fetched in the control loop
+        exclude = []
         if daq_instances['humidity_setpoint'].is_enabled:
-            # Calculate the control loop, get desired setpoints
+            exclude = ['SHT1', 'humidity_setpoint']
+        await hg.fetch_data(exclude=exclude)
+
+        # Control loop
+        if daq_instances['humidity_setpoint'].is_enabled:
+            # Get the setpoint of the control scheme
+            setpoint = (await daq_instances['humidity_setpoint'].fetch_data())['values']['humidity_setpoint']
+            daq_instances['humidity_setpoint'].pid.setpoint = setpoint
+
+            # Compute new output from the PID according to the system's current value
+            current_humidity = await daq_instances['SHT1'].fetch_data()
+            if current_humidity == False:
+                logging.error("SHT1 DISCONNECTED, CANNOT RUN CONTROL LOOP")
+                continue
+            else:
+                current_humidity = current_humidity['value']['humidity']
+            
+            # Get the controller output to send to the plant (MFCs)
+            # This value defines the ratio of the MFC flow rates
+            control = daq_instances['humidity_setpoint'].pid(current_humidity)
+
             # Set the MFCs
-            pass
+            total_flow = CONTROL_DATA['params']['flowRate']
+            hg.add_flask_command( daq_instances['MFC1'].set_flow_rate, 
+                             {'flow_rate': total_flow*(1-control)   })
+            hg.add_flask_command( daq_instances['MFC2'].set_flow_rate, 
+                             {'flow_rate': total_flow*control       })
+
         
-        await asyncio.sleep(0.5)
+        await asyncio.sleep(HARDWARE_LOOP_DELAY)
 
 # Start the Flask app and hardware loop
 if __name__ == '__main__':

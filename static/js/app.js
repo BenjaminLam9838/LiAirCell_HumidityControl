@@ -47,6 +47,15 @@ $(document).ready(function() {
     $('#startRecordingButton').click(handleStartRecordingButton);       //Form submission for saving the file and recording data
     $('#stopRecordingButton').click(handleStopRecordingButton);       //Stop the recording
 
+
+    // Handle the buttons for adding and deleting rows
+    $('#add-segment-row').click(handleAddSegmentRow);
+
+    // Delegate click event for removing segment rows
+    $(document).on('click', '.remove-segment-row', function() {
+        $(this).closest('.segment-row').remove();
+    });
+
     // Submit button click event
     $('#plot-segments').click(handlePlotSegmentsButton);
 
@@ -63,6 +72,8 @@ $(document).ready(function() {
     $('#saveFileForm').submit((e) => {
         e.preventDefault(); // Prevent the default form submission
     });
+
+
 
 
     console.log('Document Ready');
@@ -134,7 +145,8 @@ function updateControlMode() {
     .then(response => response.json())
     .then(data => {
         // Update the control mode alert
-        updateControlModeAlert(data);
+        console.log("Control Mode:", data);
+        updateControlModeDisplay(data);
     });
 }
 
@@ -352,7 +364,6 @@ function updateControlModeDisplay(data) {
     CONTROL_MODE = data['control_mode'];
     switch(CONTROL_MODE) {
         case 'MAN':
-            console.log(CONTROL_MODE);
             $('#manualControl-MFC1').val(data['control_params']['MFC1']);
             $('#manualControl-MFC2').val(data['control_params']['MFC2']);
 
@@ -449,6 +460,29 @@ function updateRecordingStatusHTML(message) {
 /////////
 // Plot Arbitrary Segments
 //////////
+
+function handleAddSegmentRow() {
+    var newRow = `
+        <div class="row segment-row">
+            <div class="col-md-1" style="text-align: right;"></div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <input type="number" step="0.01" class="form-control" name="duration">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <input type="text" class="form-control" name="segment_string">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-danger btn-sm remove-segment-row">X</button>
+            </div>
+        </div>
+    `;
+    $('#segment-settings-container').append(newRow);
+}
+
 function handlePlotSegmentsButton() {
     // Collect all segment settings
     let segmentSettings = getArbSegments();

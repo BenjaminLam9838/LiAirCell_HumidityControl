@@ -194,47 +194,12 @@
                                                     <div class="col-md-6">
                                                         <div class="input-group">
                                                             <span class="input-group-text"> <b>Flow Rate</b> </span>
-                                                            <input type="number" class="form-control" id="arbitrarySetpoint-flowRate" name="segment_duration">
+                                                            <input type="number" class="form-control" id="arbitrarySetpoint-flowRate" name="segment_duration" required>
                                                             <span class="input-group-text">[sccm]</span>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            
-                                            <!-- JavaScript for adding dynamic rows -->
-                                            <script>
-                                                $(document).ready(function() {
-                                                    // Counter for enumerating rows
-                                            
-                                                    // Add row button click event
-                                                    $('#add-segment-row').click(function() {
-                                                        var newRow = `
-                                                            <div class="row segment-row">
-                                                                <div class="col-md-1" style="text-align: right;"></div>
-                                                                <div class="col-md-3">
-                                                                    <div class="form-group">
-                                                                        <input type="number" step="0.01" class="form-control" name="duration">
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-md-6">
-                                                                    <div class="form-group">
-                                                                        <input type="text" class="form-control" name="segment_string">
-                                                                    </div>
-                                                                </div>
-                                                                <div class="col-md-2">
-                                                                    <button type="button" class="btn btn-danger btn-sm remove-segment-row">X</button>
-                                                                </div>
-                                                            </div>
-                                                        `;
-                                                        $('#segment-settings-container').append(newRow);
-                                                    });
-                                            
-                                                    // Delegate click event for removing segment rows
-                                                    $(document).on('click', '.remove-segment-row', function() {
-                                                        $(this).closest('.segment-row').remove();
-                                                    });
-                                                });
-                                            </script>
                                         </div>
                                     </div>
                                     <!-- Submit Button -->

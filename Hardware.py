@@ -10,6 +10,7 @@ from HumiditySensorInterface import HumiditySensorInterface
 import sys
 import numpy as np
 import sympy as sp
+import simple_pid
 
 
 # Define a class to represent a generic Data Aquisition component.  
@@ -285,7 +286,6 @@ class DummyDAQ(DAQ):
         
         return [self.is_connected, "Connected to DUMMYDAQ"]
 
-
 class HardwareGroup:
     def __init__(self, daq_instances, max_list_length):
         self.daq_instances = daq_instances
@@ -293,10 +293,6 @@ class HardwareGroup:
         self.max_list_length = max_list_length
 
         self.flask_command_queue = asyncio.Queue()
-
-        # Initialize a list to store data for each instance
-        for daq in self.daq_instances.keys():
-            self.daq_lists[daq] = []
 
     def add_flask_command(self, func, params):
         self.flask_command_queue.put_nowait( (func, params) )
@@ -320,7 +316,7 @@ class HardwareGroup:
         # Await all tasks to complete
         await asyncio.gather(*tasks)
 
-    async def fetch_data(self):
+    async def fetch_data(self, exclude=None):
         """
         Fetches data from all DAQ instances and pushes it to a list.
 
@@ -328,28 +324,21 @@ class HardwareGroup:
             None
         """
         for daq_key in self.daq_instances.keys():
+            if exclude is not None and daq_key in exclude:
+                continue
             current_data = await self.daq_instances[daq_key].fetch_data()
-            if current_data is not False:
-                self._push_to_list(daq_key, current_data)
-
-
-    #Manage the list so that it stays at the max list length
-    def _push_to_list(self, daq_key, data):
-        self.daq_lists[daq_key].append(data)
-
-        if len(self.daq_lists[daq_key]) > self.max_list_length:
-            self.daq_lists[daq_key].pop(0)
-    
-    def get_list(self, daq_key):
-        return self.daq_lists[daq_key]
 
 class HumiditySetpoint(DAQ):
-    def __init__(self):
+    def __init__(self, PID_gains, sample_time):
         super().__init__()
         self.is_connected = False
         self.setpoint_func = None
         self.time_points = None
         self.setpoints = None
+
+        self.pid = simple_pid.PID(*PID_gains, setpoint=0)
+        self.pid.output_limits = (0,1)    # Output value will be between 0 and 10
+        self.pid.sample_time = sample_time  # PID update interval in seconds
 
     def set_setpoint(self, setpoint, time_min=None):
         """
@@ -446,45 +435,48 @@ class HumiditySetpoint(DAQ):
         super().close_save_file()
         self.is_connected = False
     
+    def parse_timeseries(expression_duration_pairs):
+        """
+        Parses a list of expression-duration pairs and generates a time series of values.
 
+        Parameters:
+        expression_duration_pairs (list): A list of tuples where each tuple (expr, dur) contains an expression (string) and its duration (float).
 
-def parse_timeseries(expression_duration_pairs):
-    """
-    Parses a list of expression-duration pairs and generates a time series of values.
+        Returns:
+        tuple: A tuple containing two numpy arrays - the time values and the corresponding values generated from the expressions.
+        """
 
-    Parameters:
-    expression_duration_pairs (list): A list of tuples where each tuple (expr, dur) contains an expression (string) and its duration (float).
+        t = sp.symbols('t')
+        values = []
+        time_min = []
 
-    Returns:
-    tuple: A tuple containing two numpy arrays - the time values and the corresponding values generated from the expressions.
-    """
+        current_time = 0
+        for expr, duration in expression_duration_pairs:
+            # Skip empty expressions
+            # if len(expr) == 0 or duration == :
+            #     continue
 
-    t = sp.symbols('t')
-    values = []
-    time_min = []
+            # Parse the expression
+            parsed_expr = sp.sympify(expr)
+            # Create a numpy function from the sympy expression
+            func = sp.lambdify(t, parsed_expr, modules='numpy')
 
-    current_time = 0
-    for expr, duration in expression_duration_pairs:
-        # Skip empty expressions
-        # if len(expr) == 0 or duration == :
-        #     continue
+            # Generate the times for this duration
+            segment_time = np.linspace(0, duration, num=int(duration*60))
+            segment_values = [func(x) for x in segment_time]
 
-        # Parse the expression
-        parsed_expr = sp.sympify(expr)
-        # Create a numpy function from the sympy expression
-        func = sp.lambdify(t, parsed_expr, modules='numpy')
+            # Append the values and times
+            values.extend(segment_values)
+            time_min.extend(segment_time + current_time)
+            
+            # Update current time for the next segment
+            current_time += duration
 
-        # Generate the times for this duration
-        segment_time = [i/60 for i in range( int(duration * 60) +1 )]
-        segment_values = [func(x) for x in segment_time]
+        # Constrain the values from 0 to 100
+        values = np.clip(values, 0, 100)
 
-        # Append the values and times
-        values.extend(segment_values)
-        time_min.extend([t+current_time for t in segment_time])
-        
-        # Update current time for the next segment
-        current_time += duration
-
-
-    return time_min, values
+        # Convert the values to normal floats
+        time_min = [float(t) for t in time_min]
+        values = [float(v) for v in values]
+        return time_min, values
 
