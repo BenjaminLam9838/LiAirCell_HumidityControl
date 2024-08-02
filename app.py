@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, render_template, request
-from HumiditySetpoint import *
+from HelperFunctions import *
 from HumiditySensorInterface import HumiditySensorInterface
 import logging
 import Hardware
@@ -31,7 +31,7 @@ logging.getLogger('werkzeug').setLevel(logging.WARNING)
 CONTROL_MODE = 'MAN'
 CONTROL_PARAMS = None
 CONTROL_LOOP_ON = False
-CONTROL_LOOP_SETPOINTS = None
+CONTROL_LOOP_SETPOINTFUNC = None
 CONTROL_LOOP_STARTTIME = None
 DEFAULT_SAVE_DIR = os.getcwd() + '/data'
 
@@ -210,7 +210,6 @@ async def set_control():
         # Ensure the flow rates are within the limits.  If not, set them to the limits
         CONTROL_PARAMS['MFC1'] = max(0, min(100, CONTROL_PARAMS['MFC1']))
         CONTROL_PARAMS['MFC2'] = max(0, min(100, CONTROL_PARAMS['MFC2']))
-
         logging.info(f"Setting MFCs to {CONTROL_PARAMS['MFC1']} and {CONTROL_PARAMS['MFC2']}")
 
         # Set the MFCs flow rates by adding it to the command queue to be handled by the hardware loop
@@ -222,7 +221,6 @@ async def set_control():
         message = "MFCs set to manual control"
 
     elif CONTROL_MODE == 'SPT':
-        CONTROL_LOOP_ON = True
         # Check if each of the control parameters are not blank
         if CONTROL_PARAMS['flowRate'] == '' or CONTROL_PARAMS['humidity'] == '':
             return jsonify({'success': False, 'message': 'Setpoint(s) blank'}), 400
@@ -234,7 +232,8 @@ async def set_control():
         CONTROL_PARAMS['humidity'] = max(0, min(100, CONTROL_PARAMS['humidity']))   
 
         # TODO: Set the setpoints for the control loop
-
+        CONTROL_LOOP_ON = True
+        CONTROL_LOOP_SETPOINTFUNC = lambda: CONTROL_PARAMS['humidity']
 
         message = "MFCs set to setpoint control"
 

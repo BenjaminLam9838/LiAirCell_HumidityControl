@@ -85,18 +85,19 @@ async function setupSite() {
     for (let key in components) {
         components[key].checkConnection();
     }
-    initPlots();
+
+    // Fetch data from all the components, initialize the plots
+    const frameData = await getData();
+    initPlots(frameData);
 
     // Update the recording status
-    //TODO: Check if the system is recording data
+    // TODO: Check if the system is recording data
+    updateDiagramText(frameData);
     updateRecordingStatusHTML();
     updateControlMode();
 }
 
-async function initPlots() {
-    // Fetch data from all the components, initialize the plots
-    const frameData = await getData();
-
+async function initPlots(frameData) {
     plots['main_plot'].initializePlot( processMainplot(frameData) );
     plots['subplot1'].initializePlot( processSubplot1(frameData) );
     plots['subplot2'].initializePlot( processSubplot2(frameData) );
