@@ -2,8 +2,7 @@ LiAirCell_Humidity Control
 ===
 
 A pure O<sub>2</sub> stream is split between two mass-flow controllers (MFCs) with one of the streams humidified. These are recombined to produce a gas stream of desired humidity.  The output humidity is measured and the flow through each MFC is regulated by closed-loop feedback: 
-<img width="993" alt="Screen Shot 2024-08-05 at 1 11 18 PM" src="https://github.com/user-attachments/assets/a1dbc263-17f0-4de9-a945-78252817a799">
-
+<img width="995" alt="Screen Shot 2024-08-05 at 1 14 14 PM" src="https://github.com/user-attachments/assets/d038017a-5368-4268-8c49-3c8b28e3675a">
 
 
 Software Configuration
