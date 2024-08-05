@@ -32,13 +32,15 @@ class ScrollingPlot {
         Object.keys(data).forEach(key => {
             //There may be errors if the data is not in the expected format
             try {
-                const x = data[key].datetime;   //Get the x and y values from the data
-                const y = data[key].values;
+                const x = data[key]['data'].datetime;   //Get the x and y values from the data
+                const y = data[key]['data'].values;
+                const marker = data[key]['marker'];     //Get the marker from the data
 
                 const trace = {
                     x: x,
                     y: y,
                     mode: 'lines+markers',
+                    marker: marker,
                     name: `${key.toUpperCase()}`
                 };
                 traces.push(trace);
@@ -52,7 +54,9 @@ class ScrollingPlot {
 
     // Initialize the plot
     initializePlot(data) {
+        console.log('Initializing plot with data: ', data);
         const newTraces = this.makeTraces(data);
+        console.log('New traces: ', newTraces);
         if (newTraces.length === 0) {
             return;
         }

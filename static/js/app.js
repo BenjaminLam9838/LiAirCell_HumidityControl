@@ -175,34 +175,76 @@ async function getData(){
 //This defines what each plot will show
 function processMainplot(frameData) {
     data = {
-            SHT1_temperature: frameData['SHT1']['temperature'], 
-            SHT1_humidity: frameData['SHT1']['humidity'],
-            SHT2_temperature: frameData['SHT2']['temperature'],
-            SHT2_humidity: frameData['SHT2']['humidity'],
-            test1_y1: frameData['test1']['y1'],
-            test1_y2: frameData['test1']['y2'],
-            humidity_setpoint: frameData['humidity_setpoint']['humidity_setpoint']
+            SHT1_temperature:   {data: frameData['SHT1']['temperature'], 
+                                marker: {color: 'red',
+                                        size: 10,
+                                        symbol: 'triangle-up' }},
+            SHT1_humidity:      {data: frameData['SHT1']['humidity'], 
+                                marker: {color: 'blue',
+                                        size: 10,
+                                        symbol: 'square' }},
+            SHT2_temperature:   {data: frameData['SHT2']['temperature'], 
+                                marker: {color: 'red',
+                                        size: 10,
+                                        symbol: 'triangle-up' }},
+            SHT2_humidity:      {data: frameData['SHT2']['humidity'], 
+                                marker: {color: 'blue',
+                                        size: 10,
+                                        symbol: 'square' }},
+            test1_y1:           {data: frameData['test1']['y1'], 
+                                marker: {color: 'red',
+                                        size: 10,
+                                        symbol: 'triangle-up' }},
+            test1_y2:           {data: frameData['test1']['y2'], 
+                                marker: {color: 'blue',
+                                        size: 10,
+                                        symbol: 'square' }},
+            humidity_setpoint:  {data: frameData['humidity_setpoint']['humidity_setpoint'], 
+                                marker: {color: 'black',
+                                        size: 10,
+                                        symbol: 'circle' }},
     };
-
     return data;
 }
 
 function processSubplot1(frameData) {
     data = {
-        MFC1_flowrate: frameData['MFC1']['mass_flow'],
-        MFC1_setpoint: frameData['MFC1']['setpoint'],
-        MFC1_pressure: frameData['MFC1']['pressure'],
+        MFC1_flowrate: {data: frameData['MFC1']['mass_flow'], 
+                        marker: {color: 'red',
+                                size: 10,
+                                symbol: 'triangle-up' }},
+        MFC1_setpoint: {data: frameData['MFC1']['setpoint'],
+                        marker: {color: 'blue',
+                                size: 10,
+                                symbol: 'circle' }},
+        MFC1_pressure: {data: frameData['MFC1']['pressure'],
+                        marker: {color: 'green',
+                                size: 10,
+                                symbol: 'diamond' }},
     };
     return data;
 }
 
 function processSubplot2(frameData) {
     data = {
-        MFC2_flowrate: frameData['MFC2']['mass_flow'],
-        MFC2_setpoint: frameData['MFC2']['setpoint'],
-        MFC2_pressure: frameData['MFC2']['pressure'],
+        MFC2_flowrate: {data: frameData['MFC2']['mass_flow'],
+                        marker: {color: 'red',
+                                size: 10,
+                                symbol: 'triangle-up' }},
+        MFC2_setpoint: {data: frameData['MFC2']['setpoint'],
+                        marker: {color: 'blue',
+                                size: 10,
+                                symbol: 'circle' }},
+        MFC2_pressure: {data: frameData['MFC2']['pressure'],
+                        marker: {color: 'green',
+                                size: 10,
+                                symbol: 'diamond' }}, 
     };
     return data;
+}
+
+function pairMarker(data, marker){
+    return {'data': data, 'marker': marker};
 }
 
 

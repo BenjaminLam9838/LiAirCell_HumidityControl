@@ -29,7 +29,7 @@ logging.getLogger('werkzeug').setLevel(logging.WARNING)
 
 # GLOBAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-CONTROL_DATA = { 'mode': 'MAN', 'params': None }
+CONTROL_DATA = { 'mode': 'MAN', 'params': {'MFC1': 0, 'MFC2': 0} }
 HARDWARE_LOOP_FREQ_HZ = 2     # Hardware run loop frequency [Hz]
 PID_GAINS = [5.7585,15.9046,0]  # PID gains for the control loop [Kp, Ki, Kd]
 DEFAULT_SAVE_DIR = os.getcwd() + '/data'
