@@ -49,7 +49,8 @@ $(document).ready(function() {
 
 
     // Handle the buttons for adding and deleting rows
-    $('#add-segment-row').click(handleAddSegmentRow);
+    $('#add-segment-row').click(() => handleAddSegmentRow());
+    handleAddSegmentRow(); handleAddSegmentRow(); //Add 2 rows, for default 3
 
     // Delegate click event for removing segment rows
     $(document).on('click', '.remove-segment-row', function() {
@@ -72,9 +73,6 @@ $(document).ready(function() {
     $('#saveFileForm').submit((e) => {
         e.preventDefault(); // Prevent the default form submission
     });
-
-
-
 
     console.log('Document Ready');
 });
@@ -333,7 +331,7 @@ function handleControlSubmitButton() {
             console.log('Arbitrary Control');
             // Collect all segment settings
             params = {  'segments': getArbSegments(),
-                        'flowRate': $('#arbitrarySetpoint-flowRate').val(),
+                        'flowRate': $('#arbitraryControl-flowRate').val(),
                     };
             break;
     }
@@ -381,9 +379,10 @@ function updateControlModeDisplay(data) {
             break;
         case 'ARB':
             console.log('Arbitrary Control');
-            //set the text boxes to the server values
-            $('#setpointControl-flowRate').val(data['control_params']['flowRate']);
-
+            console.log(data);
+            //Set the text boxes to the server values
+            // TODO: Finish populating the segment values
+            $('#arbitraryControl-flowRate').val(data['control_params']['flowRate']);
 
             $('#controlModeAlert').removeClass('alert-light').addClass('alert-success');
             $('#controlModeAlert-text').html(
@@ -391,7 +390,7 @@ function updateControlModeDisplay(data) {
         
             console.log('Plotting Segments:', data);
             // Create a Plotly chart
-            makeArbSegmentPlot(data);
+            makeArbSegmentPlot({'time': data['control_params']['time_s'], 'values': data['control_params']['values']});
             break;
     }
 }
@@ -461,18 +460,20 @@ function updateRecordingStatusHTML(message) {
 // Plot Arbitrary Segments
 //////////
 
-function handleAddSegmentRow() {
+function handleAddSegmentRow(values = {'value': "", 'segment_string': ''}) {
+
+    console.log(values);
     var newRow = `
         <div class="row segment-row">
             <div class="col-md-1" style="text-align: right;"></div>
             <div class="col-md-3">
                 <div class="form-group">
-                    <input type="number" step="0.01" class="form-control" name="duration">
+                    <input type="number" step="0.01" class="form-control" name="duration" value=${values['value']}>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="form-group">
-                    <input type="text" class="form-control" name="segment_string">
+                    <input type="text" class="form-control" name="segment_string" value=${values['segment_string']}>
                 </div>
             </div>
             <div class="col-md-2">

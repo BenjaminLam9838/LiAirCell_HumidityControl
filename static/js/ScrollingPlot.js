@@ -34,7 +34,7 @@ class ScrollingPlot {
             try {
                 const x = data[key].datetime;   //Get the x and y values from the data
                 const y = data[key].values;
-                
+
                 const trace = {
                     x: x,
                     y: y,
@@ -76,7 +76,6 @@ class ScrollingPlot {
 
         // Extend existing traces with new data points, otherwise add new traces
         newTraces.forEach((trace) => {
-            
             //Get the index of the trace with the same name in graphDiv.data
             const index = graphDiv.data.findIndex((element) => element.name === trace.name);
 

@@ -30,7 +30,7 @@ logging.getLogger('werkzeug').setLevel(logging.WARNING)
 # GLOBAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 CONTROL_DATA = { 'mode': 'MAN', 'params': None }
-HARDWARE_LOOP_DELAY = 0.5
+HARDWARE_LOOP_FREQ_HZ = 2     # Hardware run loop frequency [Hz]
 PID_GAINS = [5.7585,15.9046,0]  # PID gains for the control loop [Kp, Ki, Kd]
 DEFAULT_SAVE_DIR = os.getcwd() + '/data'
 
@@ -51,7 +51,7 @@ daq_instances = {
     'MFC2': Hardware.MFC(),
     'SHT1': Hardware.HumiditySensor(HSI),
     'SHT2': Hardware.HumiditySensor(HSI),
-    'humidity_setpoint': Hardware.HumiditySetpoint(PID_GAINS, HARDWARE_LOOP_DELAY),
+    'humidity_setpoint': Hardware.HumiditySetpoint(PID_GAINS, 1/HARDWARE_LOOP_FREQ_HZ),
 }
 hg = Hardware.HardwareGroup(daq_instances, 10)
 
@@ -88,7 +88,7 @@ else:
 # Flask application
 app = Flask(__name__, static_url_path='/static')
 app.config['SERVER_NAME'] = 'localhost:4000'  # Replace with your server name and port
-
+app_start_time = time.time()
 
 
 
@@ -219,7 +219,6 @@ async def plot_flow_arbitrary():
 
 @app.route('/get_current_control', methods=['GET'])
 def get_current_control():
-    print(CONTROL_DATA)
     return jsonify({'control_mode': CONTROL_DATA['mode'], 'control_params': CONTROL_DATA['params']}), 200
 
 @app.route('/set_control', methods=['POST'])
@@ -230,7 +229,7 @@ async def set_control():
     CONTROL_DATA['mode'] = requestData['controlMode']
     # Record the parameters
     CONTROL_DATA['params'] = requestData['params']
-    logging.info(f"Control mode: {CONTROL_DATA['mode']} \n{'':20}Control params: {CONTROL_DATA['params']}")
+    logging.info(f"[SET]Control mode: {CONTROL_DATA['mode']} \n{'':20}[SET]Control params: {CONTROL_DATA['params']}")
 
     message = ""
     # Set the MFCs control behavior, depending on the control scheme
@@ -289,13 +288,17 @@ async def set_control():
 
         # Set the setpoint flow rates for the MFCs
         time_s, values = Hardware.HumiditySetpoint.parse_timeseries(CONTROL_DATA['params']['segments'])
+        CONTROL_DATA['params']['time_s'] = time_s
+        CONTROL_DATA['params']['values'] = values
 
         # Set the setpoints for the control loop
         daq_instances['humidity_setpoint'].set_setpoint(values, time_s)
     
         return jsonify({'success': True, 'message': message, 
-                        'control_mode': CONTROL_DATA['mode'], 'control_params': CONTROL_DATA['params'], 
-                        'time': time_s, 'values': values}), 200
+                        'control_mode': CONTROL_DATA['mode'], 
+                        'control_params': CONTROL_DATA['params'], 
+                        'time': CONTROL_DATA['params']['time_s'], 
+                        'values': CONTROL_DATA['params']['values']}), 200
 
 @app.route('/')
 def index():
@@ -310,7 +313,8 @@ async def run_loop():
 
     # Looping
     while True:
-            # Check for commands from the Flask app and handle them
+        t0 = time.time()
+        # Check for commands from the Flask app and handle them
         if not hg.flask_command_queue.empty():
             await hg.run_flask_commands()
         
@@ -342,13 +346,12 @@ async def run_loop():
 
             # Set the MFCs
             total_flow = CONTROL_DATA['params']['flowRate']
-            hg.add_flask_command( daq_instances['MFC1'].set_flow_rate, 
-                             {'flow_rate': total_flow*(1-control)   })
-            hg.add_flask_command( daq_instances['MFC2'].set_flow_rate, 
-                             {'flow_rate': total_flow*control       })
+            await daq_instances['MFC1'].set_flow_rate( total_flow*(1-control) )
+            await daq_instances['MFC2'].set_flow_rate( total_flow*control     )
 
-        
-        await asyncio.sleep(HARDWARE_LOOP_DELAY)
+        # Calculate how much to delay, limit the delay to 0s, can't have negative delay
+        delay = (1/HARDWARE_LOOP_FREQ_HZ) - (time.time()-t0)
+        await asyncio.sleep(max(0, delay))
 
 # Start the Flask app and hardware loop
 if __name__ == '__main__':
