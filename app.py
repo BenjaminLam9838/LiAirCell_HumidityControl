@@ -30,8 +30,8 @@ logging.getLogger('werkzeug').setLevel(logging.WARNING)
 # GLOBAL VARIABLES ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 CONTROL_DATA = { 'mode': 'MAN', 'params': {'MFC1': 0, 'MFC2': 0} }
-HARDWARE_LOOP_FREQ_HZ = 2     # Hardware run loop frequency [Hz]
-PID_GAINS = [5.7585,15.9046,0]  # PID gains for the control loop [Kp, Ki, Kd]
+HARDWARE_LOOP_FREQ_HZ = 1     # Hardware run loop frequency [Hz]
+PID_GAINS = [0.05, 0.002, 0]  # PID gains for the control loop [Kp, Ki, Kd]
 DEFAULT_SAVE_DIR = os.getcwd() + '/data'
 
 # Humidity Sensor Interface, handles Arduino communication
@@ -181,8 +181,8 @@ def start_recording_data():
         os.makedirs(directory)
 
     message = "Data recording started."
-    # Start the setpoint functionality if not already started
-    if not daq_instances['humidity_setpoint'].is_enabled: 
+    # Start the setpoint functionality if not already started, if mode is ARB or SPT
+    if CONTROL_DATA['mode'] == 'ARB' or CONTROL_DATA['mode'] == 'SPT' and not daq_instances['humidity_setpoint'].is_enabled: 
         _, message_2 = daq_instances['humidity_setpoint'].enable()
         message += f"   {message_2}"
         logging.info(f"Setpoint connected: {daq_instances['humidity_setpoint'].is_enabled}")
@@ -338,11 +338,14 @@ async def run_loop():
                 logging.error("SHT1 DISCONNECTED, CANNOT RUN CONTROL LOOP")
                 continue
             else:
-                current_humidity = current_humidity['value']['humidity']
+                current_humidity = current_humidity['values']['humidity']
             
             # Get the controller output to send to the plant (MFCs)
             # This value defines the ratio of the MFC flow rates
-            control = daq_instances['humidity_setpoint'].pid(current_humidity)
+            # control = daq_instances['humidity_setpoint'].pid(current_humidity)
+            control = daq_instances['humidity_setpoint'].pid.setpoint / 100
+
+            logging.info(f"Set: {daq_instances['humidity_setpoint'].pid.setpoint:.3f}, Current: {current_humidity:.3f}, Control: {control:.3f}")
 
             # Set the MFCs
             total_flow = CONTROL_DATA['params']['flowRate']

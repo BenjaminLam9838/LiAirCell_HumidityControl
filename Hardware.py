@@ -178,7 +178,7 @@ class MFC (DAQ):
             logging.error("MFC, set_flow_rate", e)
             self.is_connected = False
             return False
-        logging.info(f"Set MFC flow rate to {flow_rate}, port {self.port}")
+        logging.info(f"Set MFC flow rate to {flow_rate:.2f}, port {self.port}")
         return True
 
 class HumiditySensor(DAQ):

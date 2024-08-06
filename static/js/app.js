@@ -17,9 +17,9 @@ const components = {
 
 // Initialize the plots
 const plots = {
-    'main_plot': new ScrollingPlot('Humidity', 'flowPlot_main', 100),
-    'subplot1': new ScrollingPlot('MFC 1 Params', 'flowPlot_sub1', 100),
-    'subplot2': new ScrollingPlot('MFC 2 Params', 'flowPlot_sub2', 100)
+    'main_plot': new ScrollingPlot('Humidity', 'flowPlot_main', 180),
+    'subplot1': new ScrollingPlot('MFC 1 Params', 'flowPlot_sub1', 180),
+    'subplot2': new ScrollingPlot('MFC 2 Params', 'flowPlot_sub2', 180)
 };
 
 
@@ -175,70 +175,101 @@ async function getData(){
 //This defines what each plot will show
 function processMainplot(frameData) {
     data = {
+            humidity_setpoint:  {data: frameData['humidity_setpoint']['humidity_setpoint'], 
+                                marker: {color: 'black',
+                                        size: 15,
+                                        symbol: 'circle' }},
             SHT1_temperature:   {data: frameData['SHT1']['temperature'], 
                                 marker: {color: 'red',
-                                        size: 10,
+                                        size: 8,
                                         symbol: 'triangle-up' }},
             SHT1_humidity:      {data: frameData['SHT1']['humidity'], 
                                 marker: {color: 'blue',
-                                        size: 10,
+                                        size: 8,
                                         symbol: 'square' }},
             SHT2_temperature:   {data: frameData['SHT2']['temperature'], 
                                 marker: {color: 'red',
-                                        size: 10,
-                                        symbol: 'triangle-up' }},
+                                        size: 8,
+                                        symbol: 'triangle-down' }},
             SHT2_humidity:      {data: frameData['SHT2']['humidity'], 
                                 marker: {color: 'blue',
-                                        size: 10,
-                                        symbol: 'square' }},
+                                        size: 8,
+                                        symbol: 'diamond' }},
             test1_y1:           {data: frameData['test1']['y1'], 
                                 marker: {color: 'red',
-                                        size: 10,
-                                        symbol: 'triangle-up' }},
+                                        size: 8,
+                                        symbol: 'x' }},
             test1_y2:           {data: frameData['test1']['y2'], 
                                 marker: {color: 'blue',
-                                        size: 10,
+                                        size: 8,
                                         symbol: 'square' }},
-            humidity_setpoint:  {data: frameData['humidity_setpoint']['humidity_setpoint'], 
-                                marker: {color: 'black',
-                                        size: 10,
-                                        symbol: 'circle' }},
     };
+    
+    // Calculate the error between the setpoint and the humidity, only 
+    // if the setpoint is available.  Add to the data object
+    if (frameData['humidity_setpoint']['humidity_setpoint'] != undefined) {
+        const datetime = frameData['humidity_setpoint']['humidity_setpoint']['datetime'];
+        const setpoint = frameData['humidity_setpoint']['humidity_setpoint']['values'];
+        const humidity = frameData['SHT1']['humidity']['values'];
+        
+        // Calculate the error
+        const min_length = Math.min(setpoint.length, humidity.length);
+        let vals = new Array(min_length);
+        for (let i = 0; i < min_length; i++) {
+            vals[i] = humidity[i] - setpoint[i] + 50;
+        }
+        const err_data = {'datetime': datetime.slice(0, min_length), 'values': vals};
+        data['setpoint_error'] = {data: err_data, 
+                        marker: {color: 'green',
+                                size: 8,
+                                symbol: 'circle' }
+                        };
+    }
+
+
     return data;
 }
 
 function processSubplot1(frameData) {
     data = {
-        MFC1_flowrate: {data: frameData['MFC1']['mass_flow'], 
-                        marker: {color: 'red',
-                                size: 10,
-                                symbol: 'triangle-up' }},
         MFC1_setpoint: {data: frameData['MFC1']['setpoint'],
-                        marker: {color: 'blue',
-                                size: 10,
+                        marker: {color: 'black',
+                                size: 8,
                                 symbol: 'circle' }},
         MFC1_pressure: {data: frameData['MFC1']['pressure'],
                         marker: {color: 'green',
-                                size: 10,
+                                size: 8,
                                 symbol: 'diamond' }},
+        MFC1_temperature: {data: frameData['MFC1']['temperature'],
+            marker: {color: 'red',
+                    size: 8,
+                    symbol: 'square' }},
+        MFC1_flowrate: {data: frameData['MFC1']['mass_flow'], 
+            marker: {color: 'blue',
+                    size: 6,
+                    symbol: 'x' }},
     };
     return data;
 }
 
 function processSubplot2(frameData) {
     data = {
-        MFC2_flowrate: {data: frameData['MFC2']['mass_flow'],
-                        marker: {color: 'red',
-                                size: 10,
-                                symbol: 'triangle-up' }},
         MFC2_setpoint: {data: frameData['MFC2']['setpoint'],
-                        marker: {color: 'blue',
-                                size: 10,
+                        marker: {color: 'black',
+                                size: 8,
                                 symbol: 'circle' }},
         MFC2_pressure: {data: frameData['MFC2']['pressure'],
                         marker: {color: 'green',
-                                size: 10,
+                                size: 8,
                                 symbol: 'diamond' }}, 
+        MFC2_temperature: {data: frameData['MFC2']['temperature'],
+            marker: {color: 'red',
+                    size: 8,
+                    symbol: 'square' }},
+        MFC2_flowrate: {data: frameData['MFC2']['mass_flow'],
+            marker: {color: 'blue',
+                    size: 6,
+                    symbol: 'x' }},
     };
     return data;
 }
