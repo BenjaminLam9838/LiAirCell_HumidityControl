@@ -294,6 +294,7 @@ class PressureSensor(DAQ):
         try:
             result = self.px.get_pressure()
         except Exception as e:
+            logging.error("PressureSensor, fetch_data", e)
             self.is_connected = False
             return False
         dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")  # Get current datetime

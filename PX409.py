@@ -25,7 +25,7 @@ class PX409:
 
     def read_response(self):
         response = self.connection.readline().decode('ascii')
-        self.connection.flushInput()    # Each response is only one line, so we can clear the input buffer
+        self.connection.flush()    # Each response is only one line, so we can clear the input buffer
         return response
 
     def get_pressure(self):
@@ -37,6 +37,9 @@ class PX409:
         """
         self.send_command('P')
         response = self.read_response().strip().split(' ')
+        # Remove all ">" character from the response
+        response = [r.replace('>', '') for r in response]
+
         return float(response[0])
 
     def close(self):

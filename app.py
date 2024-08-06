@@ -139,8 +139,6 @@ def fetch_data(daq_id):
     daq = daq_instances.get(daq_id)
     data = daq.pop_data_queue()
 
-    if daq_id == 'PS1':
-        print(f"Pressure: {data}")
     return jsonify(data)
 
 # Route to connect to a component using a specific port
