@@ -42,6 +42,9 @@ HSI = HumiditySensorInterface()
 MFC1_PORT = '/dev/tty.usbserial-AU057C72'
 MFC2_PORT = '/dev/tty.usbserial-AU05IFFF'
 
+# Pressure Sensor Port
+PS_PORT = '/dev/cu.usbserial-555149'
+
 # Create instances of the hardware components (Data aquisition components)
 daq_instances = {
     'test1': Hardware.DummyDAQ(0.05),
@@ -51,6 +54,7 @@ daq_instances = {
     'MFC2': Hardware.MFC(),
     'SHT1': Hardware.HumiditySensor(HSI),
     'SHT2': Hardware.HumiditySensor(HSI),
+    'PS1': Hardware.PressureSensor(),
     'humidity_setpoint': Hardware.HumiditySetpoint(PID_GAINS, 1/HARDWARE_LOOP_FREQ_HZ),
 }
 hg = Hardware.HardwareGroup(daq_instances, 10)
@@ -65,7 +69,7 @@ except:
     logging.error("Could not connect to ARDUINO, CHANGE PORT")
     if not TEST_MODE: sys.exit()  # Exit the program if the Arduino connection fails
 
-# Connect to the humidity sensors
+# Try a connection to the humidity sensors
 asyncio.run(daq_instances['SHT1'].connect(0x31))
 asyncio.run(daq_instances['SHT2'].connect(0x32))
 
@@ -83,6 +87,13 @@ if  daq_instances['MFC1'].is_connected and daq_instances['MFC2'].is_connected:
     hg.add_flask_command( daq_instances['MFC2'].set_flow_rate, {'flow_rate': 0} )
 else:
     logging.error("Could not connect to MFCs, CHANGE PORT")
+    if not TEST_MODE: sys.exit()
+
+# Try a connection to the pressure sensor
+try:
+    daq_instances['PS1'].connect(PS_PORT)
+except:
+    logging.error("Could not connect to Pressure Sensor, CHANGE PORT")
     if not TEST_MODE: sys.exit()
 
 # Flask application
@@ -128,6 +139,8 @@ def fetch_data(daq_id):
     daq = daq_instances.get(daq_id)
     data = daq.pop_data_queue()
 
+    if daq_id == 'PS1':
+        print(f"Pressure: {data}")
     return jsonify(data)
 
 # Route to connect to a component using a specific port

@@ -11,6 +11,8 @@ import sys
 import numpy as np
 import sympy as sp
 import simple_pid
+import serial
+from PX409 import PX409
 
 
 # Define a class to represent a generic Data Aquisition component.  
@@ -242,6 +244,61 @@ class HumiditySensor(DAQ):
         dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")  # Get current datetime
 
         data = {'datetime': dt, 'values': result}
+
+        # Put the data into the data queue for a sliding window
+        self._track_data(data)
+
+        return data
+
+class PressureSensor(DAQ):
+    def __init__(self):
+        super().__init__()
+        self.port = None
+        self.is_connected = False
+        self.px = PX409()
+
+    # Attempts a connection to the Sensor
+    def connect(self, port):
+        """
+        Attempts a connection to the flow controller.
+
+        Returns:
+            bool: True if the connection is successful, False otherwise.
+        """
+        self.port = port
+
+        # Try to connect to the sensor
+        try:
+            logging.info("Attempting connection to PRESSURE SENSOR.")
+            self.px.connect(self.port)
+            message = f"Connected to Sensor on port {self.port}"
+            self.is_connected = True
+        except serial.serialutil.SerialException:
+            logging.error("Could not connect to PRESSURE SENSOR.")
+            self.is_connected = False
+            return [self.is_connected, "Could not connect to PRESSURE SENSOR."]
+         
+        logging.info(f"PRESSURE SENSOR connected on port {self.port}")
+        return [self.is_connected, message]
+
+    async def fetch_data(self):
+        """
+        Fetches data from the connected Sensor.
+
+        Returns:
+            bool: True if data is fetched successfully, False otherwise.
+        """
+        if not self.is_connected:
+            return False
+
+        try:
+            result = self.px.get_pressure()
+        except Exception as e:
+            self.is_connected = False
+            return False
+        dt = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")  # Get current datetime
+
+        data = {'datetime': dt, 'values': {'pressure': result}}
 
         # Put the data into the data queue for a sliding window
         self._track_data(data)
