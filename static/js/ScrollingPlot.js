@@ -4,7 +4,7 @@
  * @class
  */
 class ScrollingPlot {
-    constructor(plotTitle, htmlElementId, MAX_TIME_WINDOW_s = 10) {
+    constructor(plotTitle, htmlElementId, MAX_TIME_WINDOW_s = 10, yRange = [0, 100]) {
         this.plotTitle = plotTitle;
         this.htmlElementId = htmlElementId;
         this.MAX_TIME_WINDOW_ms = MAX_TIME_WINDOW_s*1000;
@@ -12,7 +12,7 @@ class ScrollingPlot {
         this.layout = {
             title: { text: this.plotTitle, x: 0, font: { family: 'Arial, sans-serif', weight: 'bold' } },
             xaxis: { title: 'X Axis' },
-            yaxis: { title: 'Y Axis', range: [0, 100] },
+            yaxis: { title: 'Y Axis', range: yRange },
             showlegend: true,
             margin: {
                 l: 50,  // left margin in pixels

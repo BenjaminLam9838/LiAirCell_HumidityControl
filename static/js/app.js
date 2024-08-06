@@ -9,6 +9,7 @@ const components = {
     'MFC2': new MFC('MFC2', '/MFC2'),
     'SHT1': new Sensor('SHT1', '/SHT1'),
     'SHT2': new Sensor('SHT2', '/SHT2'),
+    'PS1': new DAQ('PS1', '/PS1'),
     'humidity_setpoint': new HumiditySetpoint('Humidity Setpoint', '/humidity_setpoint'),
     'test1': new DAQ('Test1', '/test1'),
     'test2': new DAQ('Test2', '/test2'),
@@ -17,14 +18,16 @@ const components = {
 
 // Initialize the plots
 const plots = {
-    'main_plot': new ScrollingPlot('Humidity', 'flowPlot_main', 180),
-    'subplot1': new ScrollingPlot('MFC 1 Params', 'flowPlot_sub1', 180),
-    'subplot2': new ScrollingPlot('MFC 2 Params', 'flowPlot_sub2', 180)
+    'main_plot': new ScrollingPlot('Humidity', 'flowPlot_main', 100),
+    'subplot1': new ScrollingPlot('MFC 1 Params', 'flowPlot_sub1', 100),
+    'subplot2': new ScrollingPlot('MFC 2 Params', 'flowPlot_sub2', 100),
+    'subplot3': new ScrollingPlot('Pressure Sensor', 'flowPlot_sub3', 100, yRange='auto'),
 };
 
-
+// Setup the site
 $(document).ready(function() {
-    setupSite();
+
+    setupSite(); // Setup the site
 
     $('#dataRecordingFile').val(DEFAULT_SAVE_DIRECTORY); // Set the default save directory
 
@@ -108,12 +111,14 @@ async function setupSite() {
     updateDiagramText(frameData);
     updateRecordingStatusHTML();
     updateControlMode();
+    
 }
 
 async function initPlots(frameData) {
     plots['main_plot'].initializePlot( processMainplot(frameData) );
     plots['subplot1'].initializePlot( processSubplot1(frameData) );
     plots['subplot2'].initializePlot( processSubplot2(frameData) );
+    plots['subplot3'].initializePlot( processSubplot3(frameData) );
 }
 
 async function updatePlots(frameData){
@@ -127,6 +132,10 @@ async function updatePlots(frameData){
 
     try {
         plots['subplot2'].updatePlot( processSubplot2(frameData) );
+    } catch (error) {    }
+
+    try {
+        plots['subplot3'].updatePlot( processSubplot3(frameData) );
     } catch (error) {    }
 }
 
@@ -262,17 +271,21 @@ function processSubplot2(frameData) {
                         marker: {color: 'green',
                                 size: 8,
                                 symbol: 'diamond' }}, 
-        MFC2_temperature: {data: frameData['MFC2']['temperature'],
-            marker: {color: 'red',
-                    size: 8,
-                    symbol: 'square' }},
-        MFC2_flowrate: {data: frameData['MFC2']['mass_flow'],
-            marker: {color: 'blue',
-                    size: 6,
-                    symbol: 'x' }},
     };
     return data;
 }
+
+function processSubplot3(frameData) {
+    console.log(frameData);
+    data = {
+        PS1: {data: frameData['PS1']['pressure'],
+                        marker: {color: 'red',
+                                size: 10,
+                                symbol: 'circle' }},
+    };
+    return data;
+}
+
 
 function pairMarker(data, marker){
     return {'data': data, 'marker': marker};

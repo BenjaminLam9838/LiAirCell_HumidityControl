@@ -243,6 +243,7 @@ class Sensor extends DAQ {
         });
         
         this.updateDiagram();
+        this.updateModal();
         return this.isConnected;
     }
 
